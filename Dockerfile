@@ -1,8 +1,7 @@
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8000
+    PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies needed for audio processing & PDF generation
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,6 +24,6 @@ COPY . .
 # Ensure storage directories exist
 RUN mkdir -p storage/logs storage/media storage/reports storage/temp storage/fonts storage/run
 
-EXPOSE 8000
+EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
