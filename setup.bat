@@ -39,10 +39,25 @@ if not defined PY_CMD (
     python --version >nul 2>&1
     if !errorlevel! equ 0 (
         for /f "tokens=2" %%a in ('python --version 2^>^&1') do set "FOUND_VER=%%a"
-        echo [ERROR] Found Python !FOUND_VER!, but 3.11, 3.12 or 3.13 is required.
+        REM Parse major.minor from FOUND_VER (e.g. 3.12.10 -> 3 and 12)
+        for /f "tokens=1,2 delims=." %%m in ("!FOUND_VER!") do (
+            set "PY_MAJOR=%%m"
+            set "PY_MINOR=%%n"
+        )
+        if "!PY_MAJOR!"=="3" (
+            if "!PY_MINOR!"=="11" set "PY_CMD=python"& set "PY_VER=3.11"
+            if "!PY_MINOR!"=="12" set "PY_CMD=python"& set "PY_VER=3.12"
+            if "!PY_MINOR!"=="13" set "PY_CMD=python"& set "PY_VER=3.13"
+        )
+        if not defined PY_CMD (
+            echo [ERROR] Found Python !FOUND_VER!, but 3.11, 3.12 or 3.13 is required.
+        )
     ) else (
         echo [ERROR] Python is not installed, or not on your PATH.
     )
+)
+
+if not defined PY_CMD (
     echo.
     echo     Install Python 3.12 from https://www.python.org/downloads/
     echo     Tick "Add python.exe to PATH" during installation.
