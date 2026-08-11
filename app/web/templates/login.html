@@ -1,0 +1,169 @@
+<!doctype html>
+{# Light is the default. The sign-in screen has one deliberate look and does
+   not follow the OS dark preference. #}
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in · {{ app_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/tks-mark.svg') }}">
+</head>
+<body>
+<div class="auth">
+
+  <div class="auth-panel">
+    <div class="auth-panel-inner">
+      <div class="auth-card">
+
+        <div class="auth-card-head">
+          <div class="auth-logo">
+            <img src="{{ url_for('static', path='img/techknomatic.svg') }}"
+                 alt="Techknomatic Services Pvt Ltd" width="180" height="56">
+          </div>
+          <h1>{{ app_name }}</h1>
+          <p class="auth-tagline">Voice notes in, progress reports out</p>
+          <div class="auth-chips">
+            <span class="chip-listen">Listen</span>
+            <span class="chip-draft">Draft</span>
+            <span class="chip-deliver">Deliver</span>
+          </div>
+        </div>
+
+        <div class="auth-body">
+          <h2>Sign in to continue</h2>
+          <p class="auth-lede">Enter your portal credentials to access the dashboard.</p>
+
+          {% if error %}
+            <div class="auth-note auth-note-error">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <p style="margin:0">{{ error }}</p>
+            </div>
+          {% endif %}
+
+          {% if notice %}
+            <div class="auth-note auth-note-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <p style="margin:0">{{ notice }}</p>
+            </div>
+          {% endif %}
+
+          {% if setup_hint %}
+            <div class="auth-note auth-note-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg>
+              <p style="margin:0">
+                No logins exist yet. Create the first administrator on the server:
+                <code>python scripts/make_admin.py --create</code>
+              </p>
+            </div>
+          {% endif %}
+
+          <form method="post" action="/login" autocomplete="on">
+            <input type="hidden" name="next" value="{{ next_url }}">
+
+            <div class="auth-field">
+              <label for="login-username">Username</label>
+              <div class="auth-input">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="login-username" name="username" required autofocus
+                       autocomplete="username" placeholder="Enter your username"
+                       value="{{ username or '' }}">
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="login-password">Password</label>
+              <div class="auth-input">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type="password" id="login-password" name="password" required
+                       autocomplete="current-password" placeholder="Enter your password">
+              </div>
+            </div>
+
+            <button type="submit" class="auth-submit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg>
+              Sign in
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <p class="auth-foot">
+        &copy; {{ year }} Techknomatic Services Pvt Ltd. All rights reserved.
+      </p>
+    </div>
+  </div>
+
+  <aside class="auth-hero">
+    <div class="auth-toast">
+      <div class="auth-toast-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <strong>Report delivered</strong>
+        <span>Daily Progress Report sent on WhatsApp.</span>
+      </div>
+    </div>
+
+    <h2>Turn site updates into finished reports.</h2>
+    <p>
+      Send a voice note from the field. Get a structured Daily Progress Report back
+      in minutes — automatically transcribed, formatted, and tracked in one place.
+    </p>
+
+    {# Each stage carries its own colour, and the connector between two stages
+       fills with a gradient from one to the next as the flow advances. #}
+    <div class="pipeline" role="img"
+         aria-label="How it works: voice note, transcribe, structure, report, delivered">
+      <div class="pipeline-stage" style="--c:#4FA3D9; --next:#20C5CB">
+        <div class="pipeline-node">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+        </div>
+        <span class="pipeline-label">Voice note</span>
+        <span class="pipeline-link"><i></i></span>
+      </div>
+
+      <div class="pipeline-stage" style="--c:#20C5CB; --next:#3AA655">
+        <div class="pipeline-node">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+        </div>
+        <span class="pipeline-label">Transcribe</span>
+        <span class="pipeline-link"><i></i></span>
+      </div>
+
+      <div class="pipeline-stage" style="--c:#3AA655; --next:#F47C25">
+        <div class="pipeline-node">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M18.4 5.6l-2.1 2.1M21 12h-3M18.4 18.4l-2.1-2.1M12 18v3M5.6 18.4l2.1-2.1M3 12h3M5.6 5.6l2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <span class="pipeline-label">Structure</span>
+        <span class="pipeline-link"><i></i></span>
+      </div>
+
+      <div class="pipeline-stage" style="--c:#F47C25; --next:#B0D058">
+        <div class="pipeline-node">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        </div>
+        <span class="pipeline-label">Report</span>
+        <span class="pipeline-link"><i></i></span>
+      </div>
+
+      <div class="pipeline-stage" style="--c:#B0D058; --next:#B0D058">
+        <div class="pipeline-node">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </div>
+        <span class="pipeline-label">Delivered</span>
+      </div>
+    </div>
+
+    <img class="auth-hero-logo"
+         src="{{ url_for('static', path='img/techknomatic-white.svg') }}"
+         alt="Techknomatic Services Pvt Ltd" width="200" height="62">
+  </aside>
+
+</div>
+</body>
+</html>

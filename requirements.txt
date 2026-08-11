@@ -1,0 +1,63 @@
+# --- Web framework ---------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+httpx==0.28.1
+python-dotenv==1.0.1
+python-multipart==0.0.20
+
+# --- Admin dashboard -------------------------------------------------------
+jinja2==3.1.5
+itsdangerous==2.2.0
+# bcrypt directly, not via passlib: passlib 1.7.4 breaks against bcrypt >= 4.1
+# and is unmaintained. See app/core/security.py.
+bcrypt==5.0.0
+
+# --- Database --------------------------------------------------------------
+sqlalchemy[asyncio]==2.0.36
+alembic==1.14.0
+asyncpg==0.30.0
+aiosqlite==0.20.0
+
+# --- AI providers ----------------------------------------------------------
+# One OpenAI-compatible client drives OpenAI, OpenRouter, Groq, Together,
+# DeepInfra, Ollama and any custom endpoint. See app/ai/registry.py.
+openai==1.59.6
+
+# --- Document generation ---------------------------------------------------
+python-docx==1.1.2
+fpdf2==2.8.2
+
+# --- Audio -----------------------------------------------------------------
+# imageio-ffmpeg ships a static ffmpeg binary, so voice notes transcode even
+# where no system ffmpeg is installed. The Dockerfile also installs ffmpeg.
+imageio-ffmpeg==0.5.1
+soundfile==0.12.1
+
+# --- Built-in speech-to-text ------------------------------------------------
+# Used when no speech-to-text API key is configured, so voice notes still work
+# out of the box. Resolution order is in app/ai/registry.py:LOCAL_STT_CHAIN.
+#
+#   1. faster-whisper  best accuracy, fully offline, no key   (optional below)
+#   2. pocketsphinx    lightweight, fully offline, English    (optional below)
+#   3. Google Web      no install, no key, needs internet     (always present)
+#
+# SpeechRecognition provides 2 and 3, and is always installed.
+SpeechRecognition==3.12.0
+
+# Optional. Uncomment for accurate offline transcription with no API key.
+# Pulls in ctranslate2 and downloads model weights on first use
+# (~75 MB for "base", ~1.5 GB for "large-v3"). Then set STT_PROVIDER=auto.
+# faster-whisper==1.1.0
+
+# Optional. Tiny fully-offline English engine, far less accurate than Whisper.
+# A reasonable choice on a small droplet that cannot spare the RAM.
+# pocketsphinx==5.0.4
+
+# --- Removed ---------------------------------------------------------------
+# docx2pdf: Windows/macOS only and requires Microsoft Word. DOCX to PDF
+#   conversion now goes through LibreOffice (see app/reports/pdf_generator.py),
+#   with a native fpdf2 renderer as the fallback.
+# pydub: superseded by imageio-ffmpeg + soundfile; it needed a system ffmpeg
+#   anyway and added nothing the others do not cover.

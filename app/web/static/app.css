@@ -1,0 +1,927 @@
+/* ==========================================================================
+   SiteReport Bot — portal styles
+
+   Theme: "Navy brand", ported from the TalentSphere / HR-Hiring-Portal design
+   system (docs/THEME_GUIDE.md + frontend/src/app/globals.css .theme-navy).
+   Token values are copied verbatim so the two portals read as one product:
+
+     navy sidebar #1e3a8a · orange primary #f47c25 · steel accent #4390c3
+     white cards on #f5f6f9 canvas · ink #222b42 · 12px radius
+
+   Dark mode mirrors that project's .dark block (oklch, violet primary).
+
+   No build step and no CSS framework: the portal must render correctly even
+   when the machine serving it has no outbound internet.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- Surfaces ------------------------------------------------------- */
+  --canvas:      #f5f6f9;   /* --background */
+  --surface:     #ffffff;   /* --card       */
+  --surface-2:   #eef0f5;   /* --muted      */
+  --line:        #e4e7ee;   /* --border     */
+  --line-strong: #d3d8e4;   /* derived, for control outlines */
+
+  /* --- Text ----------------------------------------------------------- */
+  --ink:   #222b42;         /* --foreground       */
+  --ink-2: #5c6680;         /* --muted-foreground */
+  --ink-3: #666f84;         /* derived; 4.66:1 on canvas */
+
+  /* --- Brand ---------------------------------------------------------- */
+  /* Three values here deviate from the source tokens, and only because that
+     project's own pre-delivery checklist requires 4.5:1 text contrast:
+       --primary-ink      white on #f47c25 measures 2.71:1. Keeping the exact
+                          brand orange and darkening the label to ink reaches
+                          5.20:1; darkening the orange enough for white text
+                          (#b45309) would have changed the brand colour.
+       --primary-soft-ink #c95e10 on #fdebdd measures 3.56:1 -> #a34a08 = 5.11:1.
+       --secondary-ink    #1778af on #e4eef6 measures 4.11:1 -> #146395 = 5.50:1.
+     Set --primary-ink back to #ffffff for pixel parity with the HR portal. */
+  --primary:          #f47c25;   /* --primary, unchanged */
+  --primary-ink:      #222b42;   /* was #ffffff */
+  --primary-soft:     #fdebdd;   /* --accent, unchanged  */
+  --primary-soft-ink: #a34a08;   /* was #c95e10 */
+  --secondary-soft:   #e4eef6;   /* --secondary, unchanged */
+  --secondary-ink:    #146395;   /* was #1778af */
+
+  /* WCAG 2.2 wants a focus indicator at 3:1 against what surrounds it, and
+     #f47c25 only reaches 2.51:1 on the canvas. Same hue, one step deeper. */
+  --focus: #c95e10;
+
+  /* --- Sidebar (navy panel beside light content) ---------------------- */
+  --sidebar:        #1e3a8a;
+  --sidebar-ink:    #eef2fb;
+  --sidebar-ink-2:  #b8c6ec;   /* derived; 6.1:1 on the navy panel */
+  --sidebar-active: #2c50b3;
+  --sidebar-line:   #2c50b3;
+
+  /* --- Status (always paired with a word, never colour alone) --------- */
+  --good:     #1f7a4d;   /* --chart-4    */
+  --warning:  #945f08;   /* --chart-5    */
+  --critical: #b03a3a;   /* --destructive */
+
+  /* --- Charts --------------------------------------------------------- */
+  --chart-1: #1e2a4a;
+  --chart-2: #4390c3;
+  --chart-3: #f47c25;
+  --grid:    #e4e7ee;
+
+  /* --- Shape & depth -------------------------------------------------- */
+  --radius:    0.75rem;   /* --radius: 12px */
+  --radius-sm: 0.5rem;
+  --shadow-sm: 0 1px 2px rgba(30, 42, 74, 0.05);
+  --shadow-md: 0 4px 6px rgba(30, 42, 74, 0.08);
+  --shadow-lg: 0 10px 15px rgba(30, 42, 74, 0.10);
+
+  /* --- Type ----------------------------------------------------------- */
+  /* Poppins for headings, Open Sans for body — the HR portal's pairing.
+     Loaded in the page head; these stacks are the offline fallback. */
+  --f-heading: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-ui: "Open Sans", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --f-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+
+  --transition: 180ms ease;
+  --sidebar-w: 244px;
+}
+
+/* Light is the default: every page stamps data-theme="light" on <html>, so
+   this block only takes effect if that attribute is ever absent. Dark is
+   opt-in through the sidebar toggle, handled by the [data-theme="dark"] rules
+   below. The OS preference does not switch the portal on its own. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --canvas:      oklch(0.17 0.03 285);
+    --surface:     oklch(0.21 0.035 285);
+    --surface-2:   oklch(0.26 0.03 285);
+    --line:        oklch(1 0 0 / 12%);
+    --line-strong: oklch(1 0 0 / 20%);
+    --ink:   oklch(0.96 0.01 285);
+    --ink-2: oklch(0.72 0.04 265);
+    --ink-3: oklch(0.64 0.04 265);
+    --primary:          oklch(0.72 0.16 276);
+    --primary-ink:      oklch(0.16 0.04 285);
+    --primary-soft:     oklch(0.28 0.05 285);
+    --primary-soft-ink: oklch(0.85 0.09 276);
+    --secondary-soft:   oklch(0.26 0.04 285);
+    --secondary-ink:    oklch(0.90 0.03 265);
+    --sidebar:        oklch(0.19 0.04 285);
+    --sidebar-ink:    oklch(0.94 0.02 285);
+    --sidebar-ink-2:  oklch(0.72 0.04 265);
+    --sidebar-active: oklch(0.26 0.05 285);
+    --sidebar-line:   oklch(1 0 0 / 10%);
+    --good:     oklch(0.72 0.15 155);
+    --warning:  oklch(0.80 0.13 85);
+    --critical: oklch(0.704 0.191 22.216);
+    --chart-1: oklch(0.809 0.105 251.813);
+    --chart-2: oklch(0.623 0.214 259.815);
+    --chart-3: oklch(0.72 0.16 276);
+    --focus:   oklch(0.72 0.16 276);
+    --grid:    oklch(1 0 0 / 10%);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas:      oklch(0.17 0.03 285);
+  --surface:     oklch(0.21 0.035 285);
+  --surface-2:   oklch(0.26 0.03 285);
+  --line:        oklch(1 0 0 / 12%);
+  --line-strong: oklch(1 0 0 / 20%);
+  --ink:   oklch(0.96 0.01 285);
+  --ink-2: oklch(0.72 0.04 265);
+  --ink-3: oklch(0.64 0.04 265);
+  --primary:          oklch(0.72 0.16 276);
+  --primary-ink:      oklch(0.16 0.04 285);
+  --primary-soft:     oklch(0.28 0.05 285);
+  --primary-soft-ink: oklch(0.85 0.09 276);
+  --secondary-soft:   oklch(0.26 0.04 285);
+  --secondary-ink:    oklch(0.90 0.03 265);
+  --sidebar:        oklch(0.19 0.04 285);
+  --sidebar-ink:    oklch(0.94 0.02 285);
+  --sidebar-ink-2:  oklch(0.72 0.04 265);
+  --sidebar-active: oklch(0.26 0.05 285);
+  --sidebar-line:   oklch(1 0 0 / 10%);
+  --good:     oklch(0.72 0.15 155);
+  --warning:  oklch(0.80 0.13 85);
+  --critical: oklch(0.704 0.191 22.216);
+  --chart-1: oklch(0.809 0.105 251.813);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.72 0.16 276);
+  --focus:   oklch(0.72 0.16 276);
+  --grid:    oklch(1 0 0 / 10%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--secondary-ink); text-decoration: none; cursor: pointer; transition: color var(--transition); }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--f-heading);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+code, .mono, .tnum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+button, [role="button"], summary, label[for] { cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- App shell ---------------------------------------------------------- */
+
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+  border-right: 1px solid var(--sidebar-line);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.brand {
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid var(--sidebar-line);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+.brand:hover { text-decoration: none; }
+.brand-mark {
+  width: 34px; height: 34px;
+  flex-shrink: 0;
+  display: block;
+}
+.brand-name { font-family: var(--f-heading); font-weight: 600; font-size: 14.5px; line-height: 1.2; color: var(--sidebar-ink); }
+.brand-sub { color: var(--sidebar-ink-2); font-size: 11.5px; }
+
+.nav { padding: 14px 10px; flex: 1; overflow-y: auto; }
+.nav-label {
+  font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--sidebar-ink-2); padding: 14px 8px 6px; font-weight: 600;
+}
+.nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; margin-bottom: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-ink-2); font-size: 13.5px; font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+}
+.nav a:hover { background: var(--sidebar-active); color: var(--sidebar-ink); text-decoration: none; }
+.nav a.active { background: var(--sidebar-active); color: var(--sidebar-ink); font-weight: 600; }
+/* Orange marker so the active item is not signalled by colour alone. */
+.nav a.active { box-shadow: inset 3px 0 0 var(--primary); }
+.nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.nav-foot { padding: 14px 12px; border-top: 1px solid var(--sidebar-line); }
+.who { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--sidebar-active); color: var(--sidebar-ink);
+  display: grid; place-items: center; font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.who-name { font-size: 13px; font-weight: 600; line-height: 1.2; color: var(--sidebar-ink); }
+.who-role { font-size: 11.5px; color: var(--sidebar-ink-2); }
+
+.nav-foot .btn {
+  background: transparent;
+  border-color: var(--sidebar-line);
+  color: var(--sidebar-ink-2);
+}
+.nav-foot .btn:hover { background: var(--sidebar-active); color: var(--sidebar-ink); }
+
+.brand-copyright {
+  margin: 12px 0 0;
+  font-size: 10.5px; line-height: 1.4;
+  color: var(--sidebar-ink-2); opacity: 0.75;
+}
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 18px 26px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.page-title { font-family: var(--f-heading); font-size: 19px; font-weight: 600; }
+.page-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+
+.content { padding: 24px 26px 52px; flex: 1; }
+
+/* --- Buttons ------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.btn:hover { background: var(--surface-2); text-decoration: none; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.btn-primary:hover { background: var(--primary); opacity: 0.9; }
+.btn-danger { border-color: var(--critical); color: var(--critical); background: var(--surface); }
+.btn-danger:hover { background: var(--critical); color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --- Cards & panels ----------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.card-head {
+  padding: 15px 18px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
+.card-title { font-family: var(--f-heading); font-size: 14.5px; font-weight: 600; }
+.card-note { font-size: 12px; color: var(--ink-3); }
+.card-body { padding: 18px; }
+.card-body.flush { padding: 0; }
+
+.grid { display: grid; gap: 16px; }
+.grid-stats { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+.grid-main { grid-template-columns: minmax(0, 2fr) minmax(290px, 1fr); }
+@media (max-width: 1024px) { .grid-main { grid-template-columns: 1fr; } }
+
+/* --- Stat tiles --------------------------------------------------------- */
+
+.stat { padding: 17px 18px; }
+.stat-label {
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700;
+}
+.stat-value {
+  font-family: var(--f-heading);
+  font-size: 30px; font-weight: 600; line-height: 1.1; margin-top: 7px;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.stat-meta { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+
+/* --- Chart -------------------------------------------------------------- */
+/* Bars are HTML boxes: 4px rounded data-ends anchored to the baseline, a 2px
+   gap between stacked segments, and a recessive grid behind. */
+
+.chart { padding: 18px; }
+.chart-plot {
+  position: relative;
+  display: flex; align-items: flex-end; gap: 10px;
+  height: 172px; padding-top: 8px;
+}
+.chart-grid {
+  position: absolute; inset: 8px 0 0 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  pointer-events: none;
+}
+.chart-grid span { border-top: 1px solid var(--grid); height: 0; }
+
+.chart-col {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: stretch; height: 100%; gap: 2px;
+}
+.chart-col:hover .chart-tip { opacity: 1; transform: translate(-50%, -6px); }
+
+.bar { min-height: 3px; transition: opacity var(--transition); }
+.bar-delivered { background: var(--chart-2); }
+.bar-failed { background: var(--critical); }
+.chart-col .bar:first-child { border-radius: 5px 5px 0 0; }
+.chart-col .bar:not(:first-child) { border-radius: 0; }
+
+.bar-empty { background: var(--surface-2); height: 3px; border-radius: 2px; }
+
+.chart-tip {
+  position: absolute; bottom: 100%; left: 50%;
+  transform: translate(-50%, 0);
+  background: var(--chart-1); color: #fff;
+  padding: 6px 10px; border-radius: 7px;
+  font-size: 11.5px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity var(--transition), transform var(--transition);
+  z-index: 5; box-shadow: var(--shadow-md);
+}
+.chart-axis {
+  display: flex; gap: 10px; margin-top: 9px;
+  font-size: 11px; color: var(--ink-3);
+}
+.chart-axis span { flex: 1; text-align: center; min-width: 0; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; font-size: 12px; color: var(--ink-2); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.swatch-delivered { background: var(--chart-2); }
+.swatch-failed { background: var(--critical); }
+
+/* --- Tables ------------------------------------------------------------- */
+
+.table-wrap { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th {
+  text-align: left; padding: 10px 15px;
+  font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+  background: var(--surface);
+}
+table.data td {
+  padding: 12px 15px; border-bottom: 1px solid var(--line);
+  color: var(--ink-2); vertical-align: middle;
+}
+table.data tbody tr:last-child td { border-bottom: 0; }
+table.data tbody tr { transition: background var(--transition); }
+table.data tbody tr:hover { background: var(--surface-2); }
+table.data td.strong { color: var(--ink); font-weight: 600; }
+table.data td.right, table.data th.right { text-align: right; }
+
+.empty { padding: 44px 20px; text-align: center; color: var(--ink-3); }
+.empty-title { color: var(--ink-2); font-weight: 600; margin-bottom: 4px; }
+
+/* --- Pills & badges ----------------------------------------------------- */
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 100px;
+  font-size: 11.5px; font-weight: 600; white-space: nowrap;
+  border: 1px solid var(--line-strong); color: var(--ink-2);
+}
+.pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.pill-good     { color: var(--good);     border-color: color-mix(in srgb, var(--good) 40%, transparent);     background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
+.pill-warning  { color: var(--warning);  border-color: color-mix(in srgb, var(--warning) 45%, transparent);  background: color-mix(in srgb, var(--warning) 8%, var(--surface)); }
+.pill-critical { color: var(--critical); border-color: color-mix(in srgb, var(--critical) 40%, transparent); background: color-mix(in srgb, var(--critical) 8%, var(--surface)); }
+.pill-accent   { color: var(--primary-soft-ink); border-color: color-mix(in srgb, var(--primary) 40%, transparent); background: var(--primary-soft); }
+
+.tag {
+  display: inline-block; padding: 2px 8px; border-radius: 5px;
+  background: var(--secondary-soft); color: var(--secondary-ink);
+  font-size: 11px; font-weight: 600;
+}
+
+/* --- Forms -------------------------------------------------------------- */
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 12.5px; font-weight: 600;
+  color: var(--ink); margin-bottom: 6px;
+}
+.field .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; line-height: 1.45; }
+
+input[type=text], input[type=password], input[type=number], input[type=search], select, textarea {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 13.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--focus); outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
+}
+input::placeholder { color: var(--ink-3); }
+textarea { min-height: 90px; resize: vertical; font-family: var(--f-mono); font-size: 12.5px; }
+select { cursor: pointer; }
+
+.check { display: flex; align-items: flex-start; gap: 10px; }
+.check input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; }
+.check label { margin-bottom: 0; }
+
+.form-grid { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.form-actions {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 15px 18px; border-top: 1px solid var(--line); background: var(--surface-2);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* --- Flash messages ----------------------------------------------------- */
+
+.flash {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 15px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 13px; margin-bottom: 16px; color: var(--ink-2);
+}
+.flash-ok    { border-color: color-mix(in srgb, var(--good) 45%, transparent);     background: color-mix(in srgb, var(--good) 7%, var(--surface)); }
+.flash-error { border-color: color-mix(in srgb, var(--critical) 45%, transparent); background: color-mix(in srgb, var(--critical) 7%, var(--surface)); }
+.flash-warn  { border-color: color-mix(in srgb, var(--warning) 50%, transparent);  background: color-mix(in srgb, var(--warning) 9%, var(--surface)); }
+.flash strong { display: block; color: var(--ink); }
+
+/* --- Sign in ------------------------------------------------------------
+   Composition copied from the HR Hiring Portal login: a deep navy mesh
+   canvas, a white card whose header is a brand gradient band, and a hero
+   panel on the right that drops away below 1024px. Those brand values are
+   the login page's own palette in that project (frontend/src/app/login),
+   which differs slightly from the in-app navy theme. Kept verbatim so the
+   two sign-in screens match.
+   ------------------------------------------------------------------------ */
+
+.auth {
+  --a-blue:       #1d79b4;
+  --a-blue-dark:  #155e8c;
+  --a-blue-light: #4fa3d9;
+  --a-orange:     #f17e21;
+  --a-green:      #2c9f48;
+  --a-ink:        #16324a;
+  --a-muted:      #5e7488;
+  --a-line:       #e4ebf3;
+  --a-field:      #fbfdff;
+  --a-field-line: #dce6f0;
+
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  color: var(--a-ink);
+  background:
+    radial-gradient(125% 100% at 50% 42%, transparent 44%, rgba(2, 10, 20, 0.55) 100%),
+    radial-gradient(1150px 820px at 14% 6%, rgba(79, 163, 217, 0.42), transparent 58%),
+    radial-gradient(1000px 760px at 92% 92%, rgba(29, 121, 180, 0.40), transparent 58%),
+    radial-gradient(880px 700px at 78% -8%, rgba(44, 159, 72, 0.20), transparent 60%),
+    radial-gradient(820px 620px at 6% 104%, rgba(44, 159, 72, 0.18), transparent 60%),
+    radial-gradient(700px 540px at 55% 118%, rgba(241, 126, 33, 0.16), transparent 62%),
+    linear-gradient(155deg, #061a2f 0%, #0a2a48 40%, #0e3a63 72%, #114670 100%);
+}
+
+/* Left column: the sign-in panel. A fixed, narrow column rather than a share
+   of the viewport -- at 1600px a percentage width left the card adrift in
+   empty space. The white hairline separates it from the hero. */
+.auth-panel {
+  flex: 0 0 clamp(340px, 30vw, 436px);
+  display: grid;
+  place-items: center;
+  padding: 40px 30px;
+  min-width: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+}
+.auth-panel-inner { width: 100%; max-width: 356px; }
+
+.auth-card {
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.30), 0 30px 64px -26px rgba(2, 10, 20, 0.78);
+}
+
+.auth-card-head {
+  padding: 24px 26px 20px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, #1d79b4 0%, #155e8c 60%, #2c9f48 150%);
+}
+/* The full-colour Techknomatic wordmark needs a light ground, so it sits in a
+   white tile on the gradient band -- the same treatment as the source login. */
+.auth-logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 0 auto 13px; padding: 9px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 12px 26px -12px rgba(0, 0, 0, 0.5);
+}
+.auth-logo img { display: block; height: 34px; width: auto; }
+.auth-card-head h1 {
+  font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+.auth-tagline {
+  margin: 3px 0 0; font-size: 11.5px; font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+.auth-chips { display: flex; justify-content: center; gap: 6px; margin-top: 13px; }
+.auth-chips span {
+  border-radius: 6px; padding: 3px 10px;
+  font-size: 10.5px; font-weight: 700; color: #fff;
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.chip-listen  { background: #2e93d4; }
+.chip-draft   { background: #f17e21; }
+.chip-deliver { background: #33b057; }
+
+.auth-body { padding: 22px 26px 26px; }
+.auth-body h2 { font-size: 13.5px; font-weight: 700; color: var(--a-ink); }
+.auth-body .auth-lede { margin: 3px 0 17px; font-size: 11.5px; color: var(--a-muted); }
+
+.auth-field { margin-bottom: 14px; }
+.auth-field label {
+  display: block; margin-bottom: 5px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--a-muted);
+}
+.auth-input { position: relative; display: flex; align-items: center; }
+.auth-input svg {
+  position: absolute; left: 12px; width: 16px; height: 16px;
+  color: var(--a-muted); pointer-events: none;
+  transition: color var(--transition);
+}
+.auth-input input {
+  width: 100%; padding: 11px 12px 11px 37px;
+  border: 1px solid var(--a-field-line); border-radius: 10px;
+  background: var(--a-field); color: var(--a-ink);
+  font: inherit; font-size: 13.5px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.auth-input input::placeholder { color: #9fb1c2; }
+.auth-input input:focus {
+  border-color: var(--a-blue); outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(29, 121, 180, 0.16);
+}
+.auth-input:focus-within svg { color: var(--a-blue); }
+
+.auth-submit {
+  width: 100%; margin-top: 4px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 16px; border: 0; border-radius: 10px;
+  background: linear-gradient(135deg, #1d79b4 0%, #155e8c 100%);
+  color: #fff; font: inherit; font-size: 13.5px; font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 26px -14px rgba(21, 94, 140, 0.9);
+  transition: filter var(--transition), box-shadow var(--transition);
+}
+.auth-submit:hover { filter: brightness(1.07); }
+.auth-submit:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.auth-submit svg { width: 16px; height: 16px; }
+
+.auth-note {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin-bottom: 15px; padding: 11px 12px;
+  border-radius: 10px; font-size: 12px; line-height: 1.5;
+}
+.auth-note svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; }
+.auth-note-error { background: #fdf1f1; border: 1px solid #f5c8c8; color: #b02525; }
+.auth-note-info  { background: #eef6fc; border: 1px solid #cfe4f3; color: #16324a; }
+.auth-note code {
+  background: rgba(22, 50, 74, 0.08); padding: 1px 5px; border-radius: 4px; font-size: 11.5px;
+}
+
+.auth-foot {
+  margin-top: 18px; text-align: center;
+  font-size: 11px; color: rgba(255, 255, 255, 0.65);
+}
+
+/* Right column: the hero. Hidden on narrow screens, as in the source.
+   The block is vertically centred: the logo and the toast are taken out of
+   flow so they cannot pull the centring off. */
+.auth-hero {
+  position: relative;
+  flex: 1 1 auto;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 96px clamp(48px, 5vw, 88px);
+  overflow: hidden;
+  min-width: 0;
+  color: #f2f8fd;
+}
+@media (min-width: 1024px) { .auth-hero { display: flex; } }
+
+.auth-hero h2 {
+  margin: 0;
+  /* ~22ch breaks the 40-character headline over two or three balanced lines
+     rather than one long run across the hero. */
+  max-width: 22ch;
+  font-size: clamp(30px, 3.1vw, 44px);
+  line-height: 1.1; font-weight: 700; letter-spacing: -0.03em;
+  color: #f2f8fd;
+}
+.auth-hero h2 em { font-style: normal; color: #ffa34d; }
+.auth-hero p {
+  margin: 18px 0 0; max-width: 46ch;
+  font-size: 15px; line-height: 1.65; color: #b9d2e6;
+}
+
+/* Pipeline graphic — the bot's five stages.
+   Each stage sets its own --c and the --next stage's colour. The connector
+   between two nodes fills with a gradient from one to the other as the flow
+   reaches it, so the colour visibly travels along the chain. One 8s loop,
+   phase-shifted per element by animation-delay. */
+
+.pipeline {
+  margin-top: 40px; display: flex; align-items: flex-start;
+  width: 100%; max-width: 34rem; --step: 1.6s; --cycle: 8s;
+}
+.pipeline-stage {
+  flex: 1; min-width: 0; position: relative; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+
+.pipeline-node {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(9, 32, 56, 0.96);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  color: #8faec6;
+  animation: pipeline-node var(--cycle) linear infinite;
+}
+.pipeline-node svg { width: 18px; height: 18px; }
+
+.pipeline-label {
+  font-size: 11.5px; font-weight: 600; color: #8faec6;
+  animation: pipeline-label var(--cycle) linear infinite;
+}
+
+/* The connector track, spanning the gap to the next node. */
+.pipeline-link {
+  position: absolute; top: 21px; left: calc(50% + 27px);
+  width: calc(100% - 54px); height: 2px;
+  border-radius: 2px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.13);
+}
+.pipeline-link i {
+  display: block; height: 100%; width: 0; border-radius: 2px;
+  background: linear-gradient(90deg, var(--c), var(--next));
+  box-shadow: 0 0 10px -2px var(--next);
+  animation: pipeline-flow var(--cycle) linear infinite;
+}
+
+/* Nodes light at 0s, 1.6s, 3.2s ... */
+.pipeline-stage:nth-child(1) .pipeline-node,
+.pipeline-stage:nth-child(1) .pipeline-label { animation-delay: 0s; }
+.pipeline-stage:nth-child(2) .pipeline-node,
+.pipeline-stage:nth-child(2) .pipeline-label { animation-delay: 1.6s; }
+.pipeline-stage:nth-child(3) .pipeline-node,
+.pipeline-stage:nth-child(3) .pipeline-label { animation-delay: 3.2s; }
+.pipeline-stage:nth-child(4) .pipeline-node,
+.pipeline-stage:nth-child(4) .pipeline-label { animation-delay: 4.8s; }
+.pipeline-stage:nth-child(5) .pipeline-node,
+.pipeline-stage:nth-child(5) .pipeline-label { animation-delay: 6.4s; }
+
+/* Each connector runs just after its own node lights, carrying the colour
+   into the next stage. */
+.pipeline-stage:nth-child(1) .pipeline-link i { animation-delay: 0.9s; }
+.pipeline-stage:nth-child(2) .pipeline-link i { animation-delay: 2.5s; }
+.pipeline-stage:nth-child(3) .pipeline-link i { animation-delay: 4.1s; }
+.pipeline-stage:nth-child(4) .pipeline-link i { animation-delay: 5.7s; }
+
+@keyframes pipeline-node {
+  0%      { color: #8faec6; border-color: rgba(255, 255, 255, 0.16); box-shadow: none; }
+  2%      { color: var(--c); border-color: var(--c);
+            box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 14%, transparent); }
+  24%     { color: var(--c); border-color: color-mix(in srgb, var(--c) 65%, transparent);
+            box-shadow: none; }
+  34%,
+  100%    { color: #8faec6; border-color: rgba(255, 255, 255, 0.16); box-shadow: none; }
+}
+
+@keyframes pipeline-label {
+  0%          { color: #8faec6; }
+  2%, 24%     { color: #f2f8fd; }
+  34%, 100%   { color: #8faec6; }
+}
+
+@keyframes pipeline-flow {
+  0%        { width: 0; opacity: 1; }
+  9%        { width: 100%; opacity: 1; }
+  26%       { width: 100%; opacity: 1; }
+  34%       { width: 100%; opacity: 0; }
+  35%, 100% { width: 0; opacity: 0; }
+}
+
+/* A sample of what the bot delivers, echoing the source's notification card. */
+.auth-toast {
+  position: absolute; top: 30px; right: 40px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 13px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.06), 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+}
+.auth-toast-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(44, 159, 72, 0.12); color: #2c9f48;
+}
+.auth-toast-icon svg { width: 15px; height: 15px; }
+.auth-toast strong { display: block; font-size: 11px; font-weight: 700; color: #16324a; }
+.auth-toast span { font-size: 10px; color: #5e7488; }
+
+/* Decorative motion: rest on a fully-lit chain instead of animating. */
+@media (prefers-reduced-motion: reduce) {
+  .pipeline-node, .pipeline-label, .pipeline-link i { animation: none; }
+  .pipeline-node { color: var(--c); border-color: color-mix(in srgb, var(--c) 65%, transparent); }
+  .pipeline-label { color: #f2f8fd; }
+  .pipeline-link i { width: 100%; opacity: 1; }
+}
+
+/* Techknomatic mark, pinned to the bottom of the hero. Absolute so it takes
+   no part in the vertical centring above -- as a flex child with margin-top
+   auto it absorbed the free space and pushed the whole block to the top. */
+.auth-hero-logo {
+  position: absolute;
+  left: clamp(48px, 5vw, 88px);
+  bottom: 42px;
+  height: 32px; width: auto; opacity: 0.45;
+}
+
+/* Below the hero breakpoint the panel is the whole page, so the fixed column
+   width and the divider both have to go. */
+@media (max-width: 1023px) {
+  .auth-panel {
+    flex: 1 1 auto;
+    border-right: 0;
+    background: transparent;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-panel { padding: 22px 14px; }
+  .auth-card-head { padding: 20px 20px 17px; }
+  .auth-body { padding: 20px 20px 22px; }
+  .auth-logo img { height: 28px; }
+}
+
+/* --- Error page --------------------------------------------------------- */
+
+.error-page { display: grid; place-items: center; min-height: 100vh; padding: 24px; background: var(--canvas); }
+.error-card {
+  width: 100%; max-width: 460px; text-align: center;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-md);
+  padding: 34px 30px 26px;
+}
+.error-logo { height: 34px; width: auto; margin-bottom: 22px; }
+.error-code {
+  margin: 0; font-family: var(--f-heading); font-size: 40px; font-weight: 700;
+  line-height: 1; letter-spacing: -0.03em; color: var(--primary);
+}
+.error-card h1 { margin: 10px 0 0; font-size: 19px; font-weight: 600; }
+.error-message { margin: 8px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.error-copyright { margin: 24px 0 0; font-size: 11px; color: var(--ink-3); }
+
+/* --- Transcript --------------------------------------------------------- */
+
+.thread { display: flex; flex-direction: column; gap: 13px; padding: 18px; max-height: 620px; overflow-y: auto; }
+.msg { display: flex; flex-direction: column; max-width: 78%; }
+.msg-in { align-self: flex-start; }
+.msg-out { align-self: flex-end; align-items: flex-end; }
+.msg-bubble {
+  padding: 10px 13px; border-radius: 12px;
+  background: var(--surface-2); color: var(--ink);
+  font-size: 13px; white-space: pre-wrap; word-break: break-word;
+}
+.msg-out .msg-bubble { background: var(--secondary-soft); color: var(--ink); }
+.msg-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; padding: 0 3px; }
+.msg-kind {
+  display: inline-block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3);
+  margin-bottom: 3px;
+}
+.transcript-note {
+  margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--line-strong);
+  font-size: 12.5px; color: var(--ink-2); font-style: italic;
+}
+
+/* --- Misc --------------------------------------------------------------- */
+
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.toolbar form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.toolbar input[type=search], .toolbar select { width: auto; min-width: 178px; }
+
+.pager {
+  display: flex; gap: 8px; align-items: center; justify-content: space-between;
+  padding: 13px 18px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--ink-3); flex-wrap: wrap;
+}
+
+.section-title {
+  font-family: var(--f-heading);
+  font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700; margin: 28px 0 12px;
+}
+.section-title:first-child { margin-top: 0; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 13px; }
+.kv dt { color: var(--ink-3); }
+.kv dd { margin: 0; color: var(--ink); font-weight: 600; }
+
+.muted { color: var(--ink-3); }
+.right { text-align: right; }
+.nowrap { white-space: nowrap; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.scroll-x { overflow-x: auto; }
+
+/* --- Responsive: 375 / 768 / 1024 / 1440 -------------------------------- */
+
+@media (max-width: 900px) {
+  .shell { flex-direction: column; }
+  .sidebar {
+    width: 100%; flex: none; height: auto; position: static;
+    border-right: 0; border-bottom: 1px solid var(--sidebar-line);
+  }
+  .nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; }
+  .nav-label { display: none; }
+  .nav a { padding: 7px 11px; }
+  .nav a.active { box-shadow: inset 0 -3px 0 var(--primary); }
+  .nav-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .who { margin-bottom: 0; }
+  .brand-copyright { width: 100%; margin: 0; text-align: center; }
+  .content { padding: 18px 16px 44px; }
+  .topbar { padding: 15px 16px; }
+}
+
+@media (max-width: 420px) {
+  .msg { max-width: 94%; }
+  .content { padding: 14px 12px 40px; }
+  .stat-value { font-size: 26px; }
+  .brand-sub { display: none; }
+}
+
+@media print {
+  .sidebar, .toolbar, .form-actions, .btn { display: none !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; border-color: #ccc; }
+}

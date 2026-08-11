@@ -1,0 +1,62 @@
+# systemd unit for SiteReport Bot.
+#
+# Installed to /etc/systemd/system/reportbot.service by deploy/install.sh.
+#
+#   systemctl status reportbot
+#   systemctl restart reportbot
+#   journalctl -u reportbot -f
+#
+# Configuration is NOT loaded with EnvironmentFile: the .env format allows
+# things systemd's parser rejects, and a single bad line would stop the service
+# from starting. pydantic-settings reads .env from WorkingDirectory instead.
+
+[Unit]
+Description=SiteReport Bot
+Documentation=file:///opt/reportbot/docs/deployment-digitalocean.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=reportbot
+Group=reportbot
+WorkingDirectory=/opt/reportbot
+
+ExecStart=/opt/reportbot/.venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 1 \
+    --proxy-headers \
+    --forwarded-allow-ips='*'
+
+# Sessions live in process memory, so a second worker would route a user's
+# follow-up message to a process that has never heard of them. Keep this at 1
+# until the sessions table lands.
+
+Restart=always
+RestartSec=5
+# Give LibreOffice time to finish a conversion before SIGKILL.
+TimeoutStopSec=30
+KillMode=mixed
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=reportbot
+
+# --- Hardening -------------------------------------------------------------
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+
+# The only paths the service may write to.
+ReadWritePaths=/opt/reportbot/storage
+
+[Install]
+WantedBy=multi-user.target

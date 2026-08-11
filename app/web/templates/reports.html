@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="toolbar">
+  <form method="get" action="/reports">
+    <input type="search" name="q" value="{{ search or '' }}" placeholder="Search reference or project">
+    <select name="status">
+      <option value="">Any status</option>
+      {% for value, label in status_options %}
+        <option value="{{ value }}" {{ 'selected' if status_filter == value }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn" type="submit">Filter</button>
+    {% if search or status_filter %}<a class="btn" href="/reports">Clear</a>{% endif %}
+  </form>
+  <span class="spacer"></span>
+  <span class="muted">{{ total }} {{ 'report' if total == 1 else 'reports' }} in the last {{ retention_days }} days</span>
+</div>
+
+<div class="card">
+  <div class="card-body flush">
+    {% if reports %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            {% if not user.is_restricted %}<th>From</th>{% endif %}
+            <th>Project</th>
+            <th>Status</th>
+            <th>Format</th>
+            <th class="right">Size</th>
+            <th class="right">Built in</th>
+            <th class="right">Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+          <tr>
+            <td class="strong mono">{{ report.report_ref }}</td>
+            {% if not user.is_restricted %}
+            <td>
+              <a href="/contacts/{{ report.wa_id }}">{{ report.contact.display if report.contact else report.wa_id }}</a>
+            </td>
+            {% endif %}
+            <td>
+              {{ report.title or '—' }}
+              {% if report.extraction_path == 'rule_based' %}
+                <span class="pill pill-warning" title="The AI model was unreachable; a rule-based fallback produced this report."><span class="dot"></span>No AI</span>
+              {% endif %}
+            </td>
+            <td>{{ status_pill(report.status_enum) }}</td>
+            <td><span class="tag">{{ report.output_format | upper }}</span></td>
+            <td class="right nowrap muted tnum">{{ report.size_label }}</td>
+            <td class="right nowrap muted tnum">{{ (report.generation_ms / 1000) | round(1) }}s</td>
+            <td class="right nowrap muted">{{ report.created_at | when }}</td>
+            <td class="right">
+              {% if report.file_exists %}
+                <a class="btn btn-sm" href="/reports/{{ report.id }}/download">Download</a>
+              {% else %}
+                <span class="muted" style="font-size:11.5px">no file</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty">
+        <div class="empty-title">{{ 'No reports match those filters' if (search or status_filter) else 'No reports yet' }}</div>
+        <div>
+          {% if search or status_filter %}Try clearing the filters.
+          {% else %}Send a voice note to the WhatsApp number to generate one.{% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if total > page_size %}
+  <div class="pager">
+    <span>Showing {{ offset + 1 }}–{{ [offset + page_size, total] | min }} of {{ total }}</span>
+    <span class="row">
+      {% if offset > 0 %}<a class="btn btn-sm" href="?{{ qs(offset=offset - page_size) }}">Previous</a>{% endif %}
+      {% if offset + page_size < total %}<a class="btn btn-sm" href="?{{ qs(offset=offset + page_size) }}">Next</a>{% endif %}
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

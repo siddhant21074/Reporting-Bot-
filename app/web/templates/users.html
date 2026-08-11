@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="grid grid-main">
+
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">Logins</div>
+      <div class="card-note">{{ users | length }} {{ 'account' if users | length == 1 else 'accounts' }}</div>
+    </div>
+    <div class="card-body flush">
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Sees</th>
+              <th>Last signed in</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account in users %}
+            <tr>
+              <td>
+                <div class="strong">{{ account.username }}</div>
+                {% if account.display_name %}<div class="muted" style="font-size:12px">{{ account.display_name }}</div>{% endif %}
+              </td>
+              <td>
+                <span class="pill {{ 'pill-accent' if account.role_enum.value == 'admin' }}">{{ account.role_enum.label }}</span>
+                {% if not account.is_active %}<span class="pill pill-warning"><span class="dot"></span>Disabled</span>{% endif %}
+              </td>
+              <td>
+                {% if account.role_enum.value == 'user' %}
+                  <span class="mono">{{ account.wa_id }}</span>
+                {% else %}
+                  <span class="muted">Everything</span>
+                {% endif %}
+              </td>
+              <td class="nowrap muted">{{ account.last_login_at | when if account.last_login_at else 'Never' }}</td>
+              <td class="right nowrap">
+                <div class="row" style="justify-content:flex-end">
+                  <form method="post" action="/settings/users/{{ account.id }}/toggle">
+                    <button class="btn btn-sm" type="submit">{{ 'Disable' if account.is_active else 'Enable' }}</button>
+                  </form>
+                  <form method="post" action="/settings/users/{{ account.id }}/delete"
+                        data-confirm="Delete the login '{{ account.username }}'? This cannot be undone.">
+                    <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div class="card-title">Create a login</div></div>
+    <form method="post" action="/settings/users">
+      <div class="card-body">
+        <div class="field">
+          <label for="new-role">Role</label>
+          <select id="new-role" name="role" data-role-select="wa-id-field">
+            <option value="viewer" {{ 'selected' if not prefill_wa_id }}>Viewer — sees everything, cannot change anything</option>
+            <option value="user" {{ 'selected' if prefill_wa_id }}>User — sees only their own WhatsApp number</option>
+            <option value="admin">Administrator — full control, including settings</option>
+          </select>
+          <div class="hint">
+            Create a <strong>user</strong> account only when someone should see just their own
+            reports. Anyone who needs the whole picture should be a viewer.
+          </div>
+        </div>
+
+        <div class="field" id="wa-id-field" hidden>
+          <label for="new-wa-id">WhatsApp number</label>
+          <input type="text" id="new-wa-id" name="wa_id" value="{{ prefill_wa_id or '' }}"
+                 placeholder="919999999999" list="known-contacts">
+          <datalist id="known-contacts">
+            {% for contact in contacts %}
+              <option value="{{ contact.wa_id }}">{{ contact.display }}</option>
+            {% endfor %}
+          </datalist>
+          <div class="hint">
+            The account will only ever see reports and messages for this number — the
+            ones generated after they send a voice note to the bot.
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="new-username">Username</label>
+          <input type="text" id="new-username" name="username" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="new-display">Full name <span class="muted">(optional)</span></label>
+          <input type="text" id="new-display" name="display_name" autocomplete="off">
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label for="new-password">Password</label>
+          <input type="password" id="new-password" name="password" required minlength="8" autocomplete="new-password">
+          <div class="hint">At least 8 characters. Share it with them directly; it cannot be read back here.</div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create login</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+{% endblock %}

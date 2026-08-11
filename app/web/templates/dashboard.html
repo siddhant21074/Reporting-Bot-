@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="grid grid-stats">
+  <div class="card stat">
+    <div class="stat-label">Reports today</div>
+    <div class="stat-value tnum">{{ stats.reports_today }}</div>
+    <div class="stat-meta">{{ stats.reports_window }} in the last {{ stats.retention_days }} days</div>
+  </div>
+
+  <div class="card stat">
+    <div class="stat-label">{{ 'Contacts' if not user.is_restricted else 'Your number' }}</div>
+    <div class="stat-value tnum">{{ stats.active_contacts if not user.is_restricted else '1' }}</div>
+    <div class="stat-meta">{{ stats.messages_window }} messages exchanged</div>
+  </div>
+
+  <div class="card stat">
+    <div class="stat-label">Delivered</div>
+    <div class="stat-value tnum">{{ stats.success_rate if stats.success_rate is not none else '—' }}{% if stats.success_rate is not none %}%{% endif %}</div>
+    <div class="stat-meta">{{ stats.delivered }} of {{ stats.reports_window }} reports</div>
+  </div>
+
+  <div class="card stat">
+    <div class="stat-label">Needs attention</div>
+    <div class="stat-value tnum" {% if stats.failed %}style="color:var(--critical)"{% endif %}>{{ stats.failed }}</div>
+    <div class="stat-meta">{{ 'failed report' if stats.failed == 1 else 'failed reports' }}</div>
+  </div>
+
+  <div class="card stat">
+    <div class="stat-label">Average build</div>
+    <div class="stat-value tnum">{{ stats.avg_seconds if stats.avg_seconds else '—' }}{% if stats.avg_seconds %}s{% endif %}</div>
+    <div class="stat-meta">voice note to document</div>
+  </div>
+</div>
+
+<div class="grid grid-main" style="margin-top:16px">
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Reports per day</div>
+          <div class="card-note">Last {{ activity | length }} days</div>
+        </div>
+      </div>
+      <div class="chart">
+        {% set peak = chart_peak %}
+        <div class="chart-plot">
+          <div class="chart-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          {% for day in activity %}
+            <div class="chart-col">
+              <div class="chart-tip">
+                {{ day.total }} {{ 'report' if day.total == 1 else 'reports' }}
+                {%- if day.failed %}, {{ day.failed }} failed{% endif %} · {{ day.date }}
+              </div>
+              {% if day.total %}
+                {% if day.failed %}
+                  <div class="bar bar-failed" style="height: {{ (day.failed / peak * 100) | round(1) }}%"></div>
+                {% endif %}
+                {% if day.delivered %}
+                  <div class="bar bar-delivered" style="height: {{ (day.delivered / peak * 100) | round(1) }}%"></div>
+                {% endif %}
+              {% else %}
+                <div class="bar-empty"></div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="chart-axis">
+          {% for day in activity %}<span>{{ day.label }}</span>{% endfor %}
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch swatch-delivered"></span> Delivered</span>
+          <span class="legend-item"><span class="swatch swatch-failed"></span> Failed</span>
+          <span class="spacer"></span>
+          <span class="muted">Peak {{ peak }} / day</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Recent reports</div>
+        <a class="btn btn-sm" href="/reports">View all</a>
+      </div>
+      <div class="card-body flush">
+        {% if recent %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Reference</th>
+                {% if not user.is_restricted %}<th>From</th>{% endif %}
+                <th>Status</th>
+                <th>Format</th>
+                <th class="right">Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for report in recent %}
+              <tr>
+                <td class="strong mono">{{ report.report_ref }}</td>
+                {% if not user.is_restricted %}
+                <td><a href="/contacts/{{ report.wa_id }}">{{ report.contact.display if report.contact else report.wa_id }}</a></td>
+                {% endif %}
+                <td>{{ status_pill(report.status_enum) }}</td>
+                <td><span class="tag">{{ report.output_format | upper }}</span></td>
+                <td class="right nowrap muted">{{ report.created_at | when }}</td>
+                <td class="right">
+                  {% if report.file_exists %}
+                    <a class="btn btn-sm" href="/reports/{{ report.id }}/download">Download</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <div class="empty">
+            <div class="empty-title">No reports yet</div>
+            <div>Send a voice note to the WhatsApp number and the report will appear here.</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><div class="card-title">System status</div></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>WhatsApp</dt>
+          <dd>{{ health_pill(health.whatsapp) }}</dd>
+          <dt>Telegram</dt>
+          <dd>{{ health_pill(health.telegram) }}</dd>
+          <dt>Report model</dt>
+          <dd>{{ health_pill(health.llm) }}</dd>
+          <dt>Voice to text</dt>
+          <dd>{{ health_pill(health.stt) }}</dd>
+          <dt>Voice decoding</dt>
+          <dd>{{ health_pill(health.ffmpeg) }}</dd>
+          <dt>PDF fidelity</dt>
+          <dd>{{ health_pill(health.libreoffice) }}</dd>
+          <dt>PDF fonts</dt>
+          <dd>{{ health_pill(health.fonts) }}</dd>
+        </dl>
+        {% if user.is_admin %}
+          <div style="margin-top:14px"><a class="btn btn-sm" href="/settings">Open settings</a></div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div class="card-title">Active right now</div></div>
+      <div class="card-body flush">
+        {% if live_sessions %}
+          <div class="table-wrap">
+            <table class="data">
+              <tbody>
+                {% for item in live_sessions %}
+                <tr>
+                  <td class="strong">
+                    {% if not user.is_restricted %}<a href="/contacts/{{ item.sender_id }}">{{ item.sender_id }}</a>
+                    {% else %}{{ item.sender_id }}{% endif %}
+                  </td>
+                  <td class="right"><span class="pill pill-accent"><span class="dot"></span>{{ item.state | statelabel }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty" style="padding:24px 16px">
+            <div>No conversations in progress.</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div class="card-title">Retention</div></div>
+      <div class="card-body">
+        <p class="muted" style="margin:0 0 10px">
+          Messages, reports and downloaded media are kept for
+          <strong>{{ stats.retention_days }} days</strong>, then deleted automatically.
+          Report counts per contact are kept permanently.
+        </p>
+        {% if last_purge %}<div class="muted" style="font-size:12px">Last purge: {{ last_purge }}</div>{% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Configuration / secrets
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+
+# Testing / coverage
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Local storage data
+storage/logs/*
+!storage/logs/.gitkeep
+storage/media/*
+!storage/media/.gitkeep
+storage/reports/*
+!storage/reports/.gitkeep
+storage/temp/*
+!storage/temp/.gitkeep
+storage/fonts/*
+!storage/fonts/.gitkeep
+storage/run/
+audio_output.txt
+output.txt
+
+# Local database (SQLite dev)
+storage/*.db
+storage/*.db-wal
+storage/*.db-shm

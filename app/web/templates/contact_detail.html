@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block topbar_actions %}
+  <div class="row">
+    {% if not user.is_restricted %}<a class="btn" href="/contacts">All contacts</a>{% endif %}
+    {% if user.is_admin and not linked_login %}
+      <a class="btn btn-primary" href="/settings/users?wa_id={{ contact.wa_id }}">Create a login for this number</a>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-main">
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Conversation</div>
+          <div class="card-note">Last {{ retention_days }} days · {{ messages | length }} messages</div>
+        </div>
+      </div>
+      <div class="card-body flush">
+        {% if messages %}
+          <div class="thread" data-thread>
+            {% for message in messages %}
+              <div class="msg {{ 'msg-in' if message.is_inbound else 'msg-out' }}">
+                {% if message.message_type not in ('text', 'interactive') %}
+                  <span class="msg-kind">{{ message.message_type }}</span>
+                {% endif %}
+                <div class="msg-bubble">{{ message.content or '(no text)' }}{% if message.transcript %}<div class="transcript-note">Transcript: {{ message.transcript }}</div>{% endif %}</div>
+                <div class="msg-meta">{{ message.created_at | when }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty">
+            <div class="empty-title">No messages in the retention window</div>
+            <div>Messages are kept for {{ retention_days }} days.</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><div class="card-title">{{ contact.display }}</div></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>Number</dt><dd class="mono">{{ contact.wa_id }}</dd>
+          <dt>Channel</dt><dd>{{ contact.channel | capitalize }}</dd>
+          <dt>State</dt>
+          <dd>
+            {% if live_state %}<span class="pill pill-accent"><span class="dot"></span>{{ live_state | statelabel }}</span>
+            {% else %}<span class="muted">Idle</span>{% endif %}
+          </dd>
+          <dt>First seen</dt><dd>{{ contact.first_seen_at | when }}</dd>
+          <dt>Last active</dt><dd>{{ contact.last_seen_at | when }}</dd>
+          <dt>Messages</dt><dd class="tnum">{{ contact.total_messages }}</dd>
+          <dt>Reports</dt><dd class="tnum">{{ contact.total_reports }}</dd>
+          {% if linked_login %}
+            <dt>Portal login</dt><dd>{{ linked_login.username }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Reports</div>
+        <div class="card-note">{{ reports | length }} in window</div>
+      </div>
+      <div class="card-body flush">
+        {% if reports %}
+          <div class="table-wrap">
+            <table class="data">
+              <tbody>
+                {% for report in reports %}
+                <tr>
+                  <td>
+                    <div class="strong mono">{{ report.report_ref }}</div>
+                    <div class="muted" style="font-size:12px">
+                      {{ report.created_at | when }} ·
+                      <span class="tag">{{ report.output_format | upper }}</span>
+                      {% if report.photo_count %} · {{ report.photo_count }} photo{{ '' if report.photo_count == 1 else 's' }}{% endif %}
+                    </div>
+                    {% if report.title %}<div class="muted" style="font-size:12px">{{ report.title }}</div>{% endif %}
+                    {% if report.status_enum.value == 'failed' and report.error %}
+                      <div style="font-size:12px;color:var(--critical);margin-top:3px">{{ report.error }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="right nowrap">
+                    <div style="margin-bottom:5px">{{ status_pill(report.status_enum) }}</div>
+                    {% if report.file_exists %}
+                      <a class="btn btn-sm" href="/reports/{{ report.id }}/download">Download</a>
+                    {% else %}
+                      <span class="muted" style="font-size:11.5px">file removed</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty" style="padding:28px 16px">
+            <div>No reports generated yet.</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% endblock %}

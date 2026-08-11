@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% macro secret_field(key, label, hint='') %}
+  {% set is_saved = key in saved %}
+  <div class="field">
+    <label for="f-{{ key }}">{{ label }}</label>
+    {% if is_saved %}
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="password" id="f-{{ key }}" name="{{ key }}" value="{{ masked }}" readonly>
+        <button type="button" class="btn btn-sm nowrap" data-reveal-for="f-{{ key }}">Replace</button>
+      </div>
+      <div class="hint">Saved {{ saved[key] }}. Leave as-is to keep it.</div>
+    {% else %}
+      <input type="password" id="f-{{ key }}" name="{{ key }}" value=""
+             placeholder="{{ 'Set in .env — type here to override' if values[key] else 'Not set' }}"
+             autocomplete="new-password">
+      {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+      {% if values[key] and key not in saved %}<div class="hint">Currently supplied by .env on the server.</div>{% endif %}
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro text_field(key, label, hint='', type='text', placeholder='') %}
+  <div class="field">
+    <label for="f-{{ key }}">{{ label }}</label>
+    <input type="{{ type }}" id="f-{{ key }}" name="{{ key }}" value="{{ values[key] or '' }}" placeholder="{{ placeholder }}">
+    {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+  </div>
+{% endmacro %}
+
+{% block content %}
+
+<form method="post" action="/settings">
+
+  <div class="section-title">Channels</div>
+
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">WhatsApp</div>
+          <div class="card-note">Meta Cloud API</div>
+        </div>
+        {{ health_pill(health.whatsapp) }}
+      </div>
+      <div class="card-body">
+        <div class="field check">
+          <input type="checkbox" id="f-WHATSAPP_ENABLED" name="WHATSAPP_ENABLED" value="true"
+                 {{ 'checked' if values['WHATSAPP_ENABLED'] | lower in ('true','1','yes','on') }}>
+          <label for="f-WHATSAPP_ENABLED">Accept WhatsApp messages</label>
+        </div>
+
+        {{ secret_field('WHATSAPP_ACCESS_TOKEN', 'Access token', 'From Meta → WhatsApp → API Setup.') }}
+        {{ secret_field('WHATSAPP_APP_SECRET', 'App secret', 'From Meta → App Settings → Basic. Authenticates every incoming webhook.') }}
+        {{ secret_field('WHATSAPP_VERIFY_TOKEN', 'Verify token', 'Any string you choose. Paste the same value into the Meta webhook form.') }}
+
+        <div class="form-grid">
+          {{ text_field('WHATSAPP_PHONE_NUMBER_ID', 'Phone number ID') }}
+          {{ text_field('WHATSAPP_BUSINESS_ACCOUNT_ID', 'Business account ID') }}
+          {{ text_field('WHATSAPP_APP_ID', 'App ID') }}
+          {{ text_field('META_API_VERSION', 'Graph API version', '', 'text', 'v21.0') }}
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label>Webhook URL to register in Meta</label>
+          <input type="text" value="{{ webhooks.whatsapp }}" readonly onclick="this.select()">
+          <div class="hint">Subscribe to the <strong>messages</strong> field.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Telegram</div>
+          <div class="card-note">Bot API</div>
+        </div>
+        {{ health_pill(health.telegram) }}
+      </div>
+      <div class="card-body">
+        <div class="field check">
+          <input type="checkbox" id="f-TELEGRAM_ENABLED" name="TELEGRAM_ENABLED" value="true"
+                 {{ 'checked' if values['TELEGRAM_ENABLED'] | lower in ('true','1','yes','on') }}>
+          <label for="f-TELEGRAM_ENABLED">Accept Telegram messages</label>
+        </div>
+
+        {{ secret_field('TELEGRAM_BOT_TOKEN', 'Bot token', 'From @BotFather.') }}
+        {{ secret_field('TELEGRAM_WEBHOOK_SECRET', 'Webhook secret', 'Any string you choose. Telegram echoes it back to authenticate updates.') }}
+
+        <div class="field" style="margin-bottom:0">
+          <label>Webhook URL to register</label>
+          <input type="text" value="{{ webhooks.telegram }}" readonly onclick="this.select()">
+          <div class="hint">
+            Register it once with
+            <code>curl -X POST "https://api.telegram.org/bot&lt;token&gt;/setWebhook" -d "url={{ webhooks.telegram }}" -d "secret_token=&lt;secret&gt;"</code>
+          </div>
+        </div>
+
+        {% if not telegram_ready %}
+          <div class="flash flash-warn" style="margin:14px 0 0">
+            <div>The Telegram channel is not implemented yet — these credentials are stored
+            but no updates are processed until the adapter ships.</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="section-title">Artificial intelligence</div>
+
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Report writing</div>
+          <div class="card-note">Turns a transcript into the report structure</div>
+        </div>
+        {{ health_pill(health.llm) }}
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label for="f-LLM_PROVIDER">Provider</label>
+          <select id="f-LLM_PROVIDER" name="LLM_PROVIDER" data-provider-select="llm">
+            {% for provider in chat_providers %}
+              <option value="{{ provider.id }}" {{ 'selected' if values['LLM_PROVIDER'] == provider.id }}>
+                {{ provider.label }}{% if not provider.requires_key %} — no key needed{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          {% for provider in chat_providers %}
+            <div class="hint" data-provider-note="llm" data-provider="{{ provider.id }}" hidden>
+              {{ provider.note }}
+              {% if provider.key_url %}<a href="{{ provider.key_url }}" target="_blank" rel="noopener">Get a key</a>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="f-LLM_MODEL">Model</label>
+          <input type="text" id="f-LLM_MODEL" name="LLM_MODEL" list="llm-model-options"
+                 value="{{ values['LLM_MODEL'] or '' }}" placeholder="gpt-4o-mini">
+          <datalist id="llm-model-options"></datalist>
+          <div class="hint">
+            Pick from the list or type any model the provider offers.
+            <a href="/settings/models?role=chat&provider={{ values['LLM_PROVIDER'] }}">Refresh the list from the provider</a>.
+          </div>
+        </div>
+
+        {{ secret_field('LLM_API_KEY', 'API key') }}
+
+        <div class="form-grid">
+          {{ text_field('LLM_BASE_URL', 'Custom base URL', 'Only for a self-hosted or custom endpoint.') }}
+          {{ text_field('LLM_TIMEOUT', 'Timeout (seconds)', '', 'number') }}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Voice to text</div>
+          <div class="card-note">Transcribes voice notes</div>
+        </div>
+        {{ health_pill(health.stt) }}
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label for="f-STT_PROVIDER">Provider</label>
+          <select id="f-STT_PROVIDER" name="STT_PROVIDER" data-provider-select="stt">
+            {% for provider in stt_providers %}
+              <option value="{{ provider.id }}" {{ 'selected' if values['STT_PROVIDER'] == provider.id }}>
+                {{ provider.label }}{% if not provider.requires_key %} — no key needed{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          {% for provider in stt_providers %}
+            <div class="hint" data-provider-note="stt" data-provider="{{ provider.id }}" hidden>
+              {{ provider.note }}
+              {% if provider.key_url %}<a href="{{ provider.key_url }}" target="_blank" rel="noopener">Get a key</a>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="f-STT_MODEL">Model</label>
+          <input type="text" id="f-STT_MODEL" name="STT_MODEL" list="stt-model-options"
+                 value="{{ values['STT_MODEL'] or '' }}" placeholder="whisper-1">
+          <datalist id="stt-model-options"></datalist>
+          <div class="hint">
+            <a href="/settings/models?role=stt&provider={{ values['STT_PROVIDER'] }}">Refresh the list from the provider</a>.
+          </div>
+        </div>
+
+        {{ secret_field('STT_API_KEY', 'API key', 'Leave blank to reuse the report-writing key when the provider is the same.') }}
+
+        <div class="form-grid">
+          {{ text_field('STT_BASE_URL', 'Custom base URL') }}
+          {{ text_field('STT_LANGUAGE', 'Language hint', 'e.g. en or hi. Blank means auto-detect.') }}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="section-title">General</div>
+
+  <section class="card">
+    <div class="card-body">
+      <div class="form-grid">
+        {{ text_field('BASE_URL', 'Public address', 'Used to build the webhook URLs above.', 'text', 'https://reports.example.com') }}
+        {{ text_field('RETENTION_DAYS', 'Keep history for (days)', 'Messages, reports and media older than this are deleted automatically.', 'number') }}
+        {{ text_field('SESSION_TIMEOUT_SECONDS', 'Conversation timeout (seconds)', 'How long an unfinished report waits before resetting.', 'number') }}
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save settings</button>
+      <span class="muted">Changes apply immediately — no restart needed.</span>
+    </div>
+  </section>
+</form>
+
+<div class="section-title">Recent changes</div>
+<section class="card">
+  <div class="card-body flush">
+    {% if audit %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>When</th><th>Who</th><th>Change</th></tr></thead>
+          <tbody>
+            {% for entry in audit %}
+            <tr>
+              <td class="nowrap muted">{{ entry.created_at | when }}</td>
+              <td class="strong">{{ entry.actor }}</td>
+              <td>{{ entry.action }}{% if entry.detail %} — <span class="muted">{{ entry.detail }}</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty" style="padding:24px"><div>No changes recorded yet.</div></div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

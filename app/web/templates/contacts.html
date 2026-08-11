@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="toolbar">
+  <form method="get" action="/contacts">
+    <input type="search" name="q" value="{{ search or '' }}" placeholder="Search number or name">
+    <button class="btn" type="submit">Search</button>
+    {% if search %}<a class="btn" href="/contacts">Clear</a>{% endif %}
+  </form>
+  <span class="spacer"></span>
+  <span class="muted">{{ total }} {{ 'contact' if total == 1 else 'contacts' }}</span>
+</div>
+
+<div class="card">
+  <div class="card-body flush">
+    {% if contacts %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Contact</th>
+            <th>Number</th>
+            <th>Status</th>
+            <th class="right">Messages</th>
+            <th class="right">Reports</th>
+            <th class="right">Last active</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for contact in contacts %}
+          <tr>
+            <td class="strong">
+              <a href="/contacts/{{ contact.wa_id }}">{{ contact.display_name or 'Unknown' }}</a>
+            </td>
+            <td class="mono">{{ contact.wa_id }}</td>
+            <td>
+              {% set state = live_states.get(contact.wa_id) %}
+              {% if state %}
+                <span class="pill pill-accent"><span class="dot"></span>{{ state | statelabel }}</span>
+              {% else %}
+                <span class="muted">Idle</span>
+              {% endif %}
+            </td>
+            <td class="right tnum">{{ contact.total_messages }}</td>
+            <td class="right tnum">{{ contact.total_reports }}</td>
+            <td class="right nowrap muted">{{ contact.last_seen_at | when }}</td>
+            <td class="right"><a class="btn btn-sm" href="/contacts/{{ contact.wa_id }}">Open</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty">
+        <div class="empty-title">{{ 'No matching contacts' if search else 'No contacts yet' }}</div>
+        <div>
+          {% if search %}Try a different search term.
+          {% else %}Anyone who messages the WhatsApp number will appear here.{% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if total > page_size %}
+  <div class="pager">
+    <span>Showing {{ offset + 1 }}–{{ [offset + page_size, total] | min }} of {{ total }}</span>
+    <span class="row">
+      {% if offset > 0 %}
+        <a class="btn btn-sm" href="?{{ qs(offset=offset - page_size) }}">Previous</a>
+      {% endif %}
+      {% if offset + page_size < total %}
+        <a class="btn btn-sm" href="?{{ qs(offset=offset + page_size) }}">Next</a>
+      {% endif %}
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

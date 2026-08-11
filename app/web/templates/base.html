@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" data-theme="{{ theme }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}{{ page_title }}{% endblock %} · {{ app_name }}</title>
+  {# Poppins + Open Sans match the HR portal. If the browser cannot reach
+     Google Fonts, the stacks in app.css fall back to Segoe UI / system-ui and
+     the layout is unaffected. Delete these three lines to go fully offline. #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/tks-mark.svg') }}">
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <a class="brand" href="/">
+      {# White mark, because the sidebar panel is navy. #}
+      <img class="brand-mark" src="{{ url_for('static', path='img/tks-mark-white.svg') }}"
+           alt="Techknomatic" width="34" height="34">
+      <div>
+        <div class="brand-name">{{ app_name }}</div>
+        <div class="brand-sub">{{ environment }}</div>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="/" class="{{ 'active' if active == 'dashboard' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Dashboard
+      </a>
+      <a href="/reports" class="{{ 'active' if active == 'reports' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        {{ 'My reports' if user.is_restricted else 'Reports' }}
+      </a>
+      {% if not user.is_restricted %}
+      <a href="/contacts" class="{{ 'active' if active == 'contacts' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        Contacts
+      </a>
+      {% else %}
+      <a href="/contacts/{{ user.wa_id }}" class="{{ 'active' if active == 'contacts' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        My messages
+      </a>
+      {% endif %}
+
+      {% if user.is_admin %}
+      <div class="nav-label">Administration</div>
+      <a href="/settings" class="{{ 'active' if active == 'settings' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V12a2 2 0 0 1 0 4z"/></svg>
+        Settings
+      </a>
+      <a href="/settings/users" class="{{ 'active' if active == 'users' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        Logins
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="nav-foot">
+      <div class="who">
+        <div class="avatar">{{ user.name[:2] | upper }}</div>
+        <div>
+          <div class="who-name">{{ user.name }}</div>
+          <div class="who-role">{{ user.role.label }}</div>
+        </div>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-sm" data-theme-toggle title="Switch light and dark">
+          <span data-theme-label>Theme</span>
+        </button>
+        <form method="post" action="/logout"><button class="btn btn-sm" type="submit">Sign out</button></form>
+      </div>
+      <p class="brand-copyright">&copy; {{ year }} Techknomatic Services Pvt Ltd</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="page-title">{{ page_title }}</div>
+        {% if page_sub %}<div class="page-sub">{{ page_sub }}</div>{% endif %}
+      </div>
+      {% block topbar_actions %}{% endblock %}
+    </header>
+
+    <div class="content">
+      {% if flash %}
+        <div class="flash flash-{{ flash.kind }}">
+          <div>
+            <strong>{{ flash.title }}</strong>
+            {% if flash.detail %}<span>{{ flash.detail }}</span>{% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user.is_restricted %}
+        <div class="flash">
+          <div>You are signed in as a user account. This portal shows only the reports
+          and messages for <strong class="mono">{{ user.wa_id }}</strong>.</div>
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<script src="{{ url_for('static', path='app.js') }}"></script>
+</body>
+</html>
