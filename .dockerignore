@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+storage/logs/*
+!storage/logs/.gitkeep
+storage/media/*
+!storage/media/.gitkeep
+storage/reports/*
+!storage/reports/.gitkeep
+storage/temp/*
+!storage/temp/.gitkeep
+storage/run/
