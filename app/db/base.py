@@ -48,7 +48,10 @@ def get_engine() -> AsyncEngine:
     global _engine, _session_factory
 
     if _engine is None:
-        url = _normalise_url(settings.app.database_url)
+        raw_url = settings.app.database_url or ""
+        if not raw_url.strip():
+            raw_url = "sqlite+aiosqlite:///storage/app.db"
+        url = _normalise_url(raw_url)
         is_sqlite = url.startswith("sqlite")
 
         kwargs = {"echo": False, "future": True}

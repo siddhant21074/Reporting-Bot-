@@ -183,7 +183,7 @@ class Settings(BaseSettings):
     BASE_URL: str = Field(default="http://localhost:8000", description="Public base URL, used to build webhook URLs.")
 
     # --- Storage ----------------------------------------------------------
-    DATABASE_URL: str = Field(default="postgresql+asyncpg://postgres:postgres@localhost:5432/reportbot")
+    DATABASE_URL: str = Field(default="sqlite+aiosqlite:///storage/app.db")
     REDIS_URL: str = Field(default="")
     LOG_STORAGE_PATH: str = Field(default="storage/logs")
     MEDIA_STORAGE_PATH: str = Field(default="storage/media")
