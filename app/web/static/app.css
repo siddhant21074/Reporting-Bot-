@@ -516,7 +516,11 @@ select { cursor: pointer; }
   --a-field:      #fbfdff;
   --a-field-line: #dce6f0;
 
-  min-height: 100vh;
+  /* The sign-in screen is one viewport, never a scrolling document. dvh so
+     mobile browser chrome does not push it over the edge. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   align-items: stretch;
   color: var(--a-ink);
@@ -532,15 +536,17 @@ select { cursor: pointer; }
 
 /* Left column: the sign-in panel. A fixed, narrow column rather than a share
    of the viewport -- at 1600px a percentage width left the card adrift in
-   empty space. The white hairline separates it from the hero. */
+   empty space. No border and no tint: the navy canvas runs unbroken behind
+   both halves, so the card reads as floating on one background. */
 .auth-panel {
   flex: 0 0 clamp(340px, 30vw, 436px);
   display: grid;
   place-items: center;
-  padding: 40px 30px;
+  padding: clamp(20px, 4vh, 40px) 30px;
   min-width: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.03);
+  /* Safety valve only: on a very short window the card scrolls inside this
+     column rather than having the Sign in button clipped off the bottom. */
+  overflow-y: auto;
 }
 .auth-panel-inner { width: 100%; max-width: 356px; }
 
@@ -554,7 +560,7 @@ select { cursor: pointer; }
 }
 
 .auth-card-head {
-  padding: 24px 26px 20px;
+  padding: clamp(18px, 3vh, 24px) 26px clamp(15px, 2.4vh, 20px);
   text-align: center;
   color: #fff;
   background: linear-gradient(135deg, #1d79b4 0%, #155e8c 60%, #2c9f48 150%);
@@ -563,7 +569,7 @@ select { cursor: pointer; }
    white tile on the gradient band -- the same treatment as the source login. */
 .auth-logo {
   display: inline-flex; align-items: center; justify-content: center;
-  margin: 0 auto 13px; padding: 9px 16px;
+  margin: 0 auto clamp(9px, 1.6vh, 13px); padding: 8px 15px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 12px 26px -12px rgba(0, 0, 0, 0.5);
@@ -587,11 +593,11 @@ select { cursor: pointer; }
 .chip-draft   { background: #f17e21; }
 .chip-deliver { background: #33b057; }
 
-.auth-body { padding: 22px 26px 26px; }
+.auth-body { padding: clamp(16px, 2.8vh, 22px) 26px clamp(18px, 3vh, 26px); }
 .auth-body h2 { font-size: 13.5px; font-weight: 700; color: var(--a-ink); }
-.auth-body .auth-lede { margin: 3px 0 17px; font-size: 11.5px; color: var(--a-muted); }
+.auth-body .auth-lede { margin: 3px 0 clamp(12px, 2.2vh, 17px); font-size: 11.5px; color: var(--a-muted); }
 
-.auth-field { margin-bottom: 14px; }
+.auth-field { margin-bottom: clamp(10px, 1.8vh, 14px); }
 .auth-field label {
   display: block; margin-bottom: 5px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
@@ -645,7 +651,7 @@ select { cursor: pointer; }
 }
 
 .auth-foot {
-  margin-top: 18px; text-align: center;
+  margin-top: clamp(12px, 2vh, 18px); text-align: center;
   font-size: 11px; color: rgba(255, 255, 255, 0.65);
 }
 
@@ -659,7 +665,7 @@ select { cursor: pointer; }
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 96px clamp(48px, 5vw, 88px);
+  padding: clamp(56px, 11vh, 104px) clamp(40px, 5vw, 88px) clamp(32px, 6vh, 64px);
   overflow: hidden;
   min-width: 0;
   color: #f2f8fd;
@@ -677,7 +683,7 @@ select { cursor: pointer; }
 }
 .auth-hero h2 em { font-style: normal; color: #ffa34d; }
 .auth-hero p {
-  margin: 18px 0 0; max-width: 46ch;
+  margin: clamp(12px, 2vh, 18px) 0 0; max-width: 46ch;
   font-size: 15px; line-height: 1.65; color: #b9d2e6;
 }
 
@@ -688,7 +694,7 @@ select { cursor: pointer; }
    phase-shifted per element by animation-delay. */
 
 .pipeline {
-  margin-top: 40px; display: flex; align-items: flex-start;
+  margin-top: clamp(24px, 4.5vh, 42px); display: flex; align-items: flex-start;
   width: 100%; max-width: 34rem; --step: 1.6s; --cycle: 8s;
 }
 .pipeline-stage {
@@ -795,24 +801,10 @@ select { cursor: pointer; }
   .pipeline-link i { width: 100%; opacity: 1; }
 }
 
-/* Techknomatic mark, pinned to the bottom of the hero. Absolute so it takes
-   no part in the vertical centring above -- as a flex child with margin-top
-   auto it absorbed the free space and pushed the whole block to the top. */
-.auth-hero-logo {
-  position: absolute;
-  left: clamp(48px, 5vw, 88px);
-  bottom: 42px;
-  height: 32px; width: auto; opacity: 0.45;
-}
-
 /* Below the hero breakpoint the panel is the whole page, so the fixed column
-   width and the divider both have to go. */
+   width has to go or the card would sit pinned to the left. */
 @media (max-width: 1023px) {
-  .auth-panel {
-    flex: 1 1 auto;
-    border-right: 0;
-    background: transparent;
-  }
+  .auth-panel { flex: 1 1 auto; }
 }
 
 @media (max-width: 420px) {
