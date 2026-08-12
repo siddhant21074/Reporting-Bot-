@@ -116,14 +116,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
-    """Last resort. Never leaks the traceback to the caller."""
+    """Last resort. Includes exception details in non-production environments."""
     logger.exception(
         f"Unhandled exception: {exc}",
         extra={"event": "unhandled_system_exception", "path": request.url.path},
     )
+    detail = f"{type(exc).__name__}: {exc}" if settings.app.environment in ("development", "staging") or settings.app.debug else "An unexpected error occurred. The details are in the server log."
     return _error_page(
         request,
         500,
         "Something went wrong",
-        "An unexpected error occurred. The details are in the server log.",
+        detail,
     )
