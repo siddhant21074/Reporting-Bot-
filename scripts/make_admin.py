@@ -123,7 +123,8 @@ def obtain_password(supplied: str, use_random: bool) -> str:
 
 
 async def create_login(username: str, password: str, display_name: str) -> int:
-    """Creates an administrator in the database."""
+    """Creates an administrator in the database, or resets password if already exists."""
+    from app.core.security import hash_password
     from app.db.base import init_database, session_scope
     from app.db.models import UserRole
     from app.repositories import users as users_repo
@@ -133,9 +134,15 @@ async def create_login(username: str, password: str, display_name: str) -> int:
     async with session_scope() as session:
         existing = await users_repo.get_user_by_username(session, username)
         if existing:
-            print(f"\n  A login called '{username}' already exists.", file=sys.stderr)
-            print("  Choose a different username, or manage it from the portal.", file=sys.stderr)
-            return 1
+            existing.password_hash = hash_password(password)
+            existing.is_active = True
+            existing.role = UserRole.ADMIN
+            if display_name:
+                existing.display_name = display_name
+            await session.commit()
+            print(f"\n  Updated password for existing administrator '{username}'.")
+            print("  Sign in at http://localhost:8000/login\n")
+            return 0
 
         await users_repo.create_user(
             session,
