@@ -7,6 +7,7 @@ the cookie happens to expire.
 """
 
 import logging
+import secrets
 from typing import Optional
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -18,21 +19,27 @@ logger = logging.getLogger("app.auth.session")
 COOKIE_NAME = "reportbot_session"
 _SALT = "reportbot-admin-session"
 
+_fallback_secret: Optional[str] = None
 
-def _serializer() -> URLSafeTimedSerializer:
-    """Builds the signer from the configured secret.
 
-    Raises:
-        RuntimeError: If ``SECRET_KEY`` is unset, rather than signing with a
-            predictable default that would let anyone forge a session.
-    """
+def _get_secret() -> str:
+    """Returns SECRET_KEY if set, otherwise generates a fallback secret in memory."""
+    global _fallback_secret
     secret = settings.admin.secret_key
     if not secret:
-        raise RuntimeError(
-            "SECRET_KEY is not configured; the dashboard cannot sign sessions. "
-            "Generate one with scripts/make_admin.py."
-        )
-    return URLSafeTimedSerializer(secret, salt=_SALT)
+        if _fallback_secret is None:
+            _fallback_secret = secrets.token_urlsafe(48)
+            logger.warning(
+                "SECRET_KEY is not configured; using a temporary fallback secret for session cookies.",
+                extra={"event": "session_fallback_secret_generated"},
+            )
+        return _fallback_secret
+    return secret
+
+
+def _serializer() -> URLSafeTimedSerializer:
+    """Builds the signer from the configured or fallback secret."""
+    return URLSafeTimedSerializer(_get_secret(), salt=_SALT)
 
 
 def issue_session(user_id: int) -> str:
