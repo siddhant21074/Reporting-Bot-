@@ -110,6 +110,28 @@ async def init_database() -> None:
 
     logger.info("Database schema ready.", extra={"event": "db_schema_ready"})
 
+    # Auto-seed initial admin account if database is empty and credentials are set
+    try:
+        if settings.admin.username and settings.admin.password_hash:
+            from app.db.models import User, UserRole
+            from sqlalchemy import select, func
+            factory = get_session_factory()
+            async with factory() as session:
+                res = await session.execute(select(func.count()).select_from(User))
+                if res.scalar_one() == 0:
+                    admin_user = User(
+                        username=settings.admin.username,
+                        password_hash=settings.admin.password_hash,
+                        role=UserRole.ADMIN,
+                        display_name="Administrator",
+                        created_by="system",
+                    )
+                    session.add(admin_user)
+                    await session.commit()
+                    logger.info(f"Auto-seeded initial admin account '{settings.admin.username}'.")
+    except Exception as exc:
+        logger.warning(f"Auto-seed check skipped: {exc}")
+
 
 async def close_database() -> None:
     """Disposes of the engine on shutdown."""
