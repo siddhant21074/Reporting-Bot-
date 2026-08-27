@@ -284,10 +284,11 @@ class WaitingForInputState(WorkflowStateBase):
         for index, voice in enumerate(ctx.session.voice_notes):
             transcript = (voice.get("transcription") or "").strip()
             if transcript:
-                combined_inputs.append(f"Voice Note #{index + 1} Transcript: {transcript}")
+                combined_inputs.append(f"Voice update ({index + 1}): {transcript}")
         for index, text in enumerate(ctx.session.text_updates):
             if text.strip():
-                combined_inputs.append(f"Text Update #{index + 1}: {text.strip()}")
+                clean_t = text.strip().lstrip("-*•●▸ ")
+                combined_inputs.append(clean_t)
 
         combined_text = "\n\n".join(combined_inputs) if combined_inputs else "Daily progress updates recorded."
 

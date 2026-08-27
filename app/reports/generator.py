@@ -15,8 +15,18 @@ from app.ai.schemas import FullProgressReport
 logger = logging.getLogger("app.reports.generator")
 
 
+def _clean_update_text(text: Optional[str]) -> str:
+    """Removes update prefixes like 'Text Update #1:' and leading bullets."""
+    if not text:
+        return ""
+    import re
+    cleaned = re.sub(r"^(?:Text Update|Voice Note|Transcript)\s*(?:#\d+)?\s*(?:Transcript)?:?\s*", "", str(text), flags=re.IGNORECASE)
+    cleaned = re.sub(r"^[\s\-\*•●▸]+", "", cleaned).strip()
+    return cleaned
+
+
 class DocxReportGenerator:
-    """Generates official Word (.docx) Daily Progress Reports using python-docx matching Telegram template structure."""
+    """Generates official Word (.docx) Daily Progress Reports using python-docx matching template structure."""
 
     def __init__(self, reports_dir: Optional[str] = None, template_path: Optional[str] = None):
         """Initializes report generator.
@@ -83,7 +93,7 @@ class DocxReportGenerator:
         draft: Dict[str, Any],
         photo_paths: Optional[List[str]] = None,
     ) -> str:
-        """Compiles structured output into official .docx file using Telegram populator logic."""
+        """Compiles structured output into official .docx file using template populator logic."""
         template_path = self._get_template_path()
         if not template_path.exists():
             logger.error(f"Report template not found at: {template_path}")
@@ -98,7 +108,7 @@ class DocxReportGenerator:
         else:
             report_data = FullProgressReport()
 
-        summary_text = draft.get("summary") or "Daily progress update recorded."
+        summary_text = _clean_update_text(draft.get("summary") or "Daily progress update recorded.")
         
         # Convert string photo_paths to Path objects
         paths_list = [Path(p) for p in (photo_paths or []) if p and os.path.exists(p)]
@@ -124,8 +134,8 @@ class DocxReportGenerator:
             try:
                 t.cell(0, 1).text = report_id
                 t.cell(1, 1).text = today.strftime("%Y-%m-%d")
-                t.cell(2, 1).text = report_data.metadata.project_name if report_data.metadata.project_name != "N/A" else (draft.get("site_name") or "N/A")
-                t.cell(3, 1).text = report_data.metadata.location if report_data.metadata.location != "N/A" else (draft.get("site_name") or "N/A")
+                t.cell(2, 1).text = report_data.metadata.project_name if report_data.metadata.project_name != "N/A" else (draft.get("site_name") or "General Operations")
+                t.cell(3, 1).text = report_data.metadata.location if report_data.metadata.location != "N/A" else (draft.get("site_name") or "General Operations")
                 t.cell(4, 1).text = report_data.metadata.prepared_by if report_data.metadata.prepared_by != "N/A" else "Techknomatic AI Assistant"
                 logger.info("Project Information (Table 2) populated.")
             except Exception as e:
@@ -149,25 +159,52 @@ class DocxReportGenerator:
                     from app.ai.schemas import WorkSummaryItem
                     tasks_source = [WorkSummaryItem(activity=t) for t in draft.get("tasks", [])]
 
+                # Rename column headers specifically for Daily Task Updates
+                headers = ["Sr. No.", "Location / Dept", "Task / Activity Update", "Progress", "Date", "Assigned To", "Status", "Remarks"]
+                for h_idx, h_text in enumerate(headers):
+                    if len(t.rows[0].cells) > h_idx:
+                        t.rows[0].cells[h_idx].text = h_text
+
+                col_widths = [
+                    Inches(0.5),   # Sr. No.
+                    Inches(1.1),   # Location / Dept
+                    Inches(3.0),   # Task / Activity Update (Widest column for description)
+                    Inches(0.7),   # Progress
+                    Inches(0.85),  # Date
+                    Inches(0.95),  # Assigned To
+                    Inches(0.85),  # Status
+                    Inches(0.85),  # Remarks
+                ]
+
                 for idx, item in enumerate(tasks_source):
                     row_idx = idx + 1
-                    # The template ships a fixed number of blank rows; grow it
-                    # rather than dropping the tasks that do not fit.
                     while len(t.rows) <= row_idx:
                         t.add_row()
 
-                    t.cell(row_idx, 0).text = str(idx + 1)
-                    t.cell(row_idx, 1).text = item.area
-                    t.cell(row_idx, 2).text = item.activity
-                    t.cell(row_idx, 3).text = f"{item.progress_percentage}%" if item.progress_percentage is not None else ""
-                    t.cell(row_idx, 4).text = item.date if item.date != "N/A" else today.strftime("%Y-%m-%d")
-                    t.cell(row_idx, 5).text = item.responsible_person
-                    t.cell(row_idx, 6).text = item.status
-                    t.cell(row_idx, 7).text = item.remarks
+                    row = t.rows[row_idx]
+                    activity_clean = _clean_update_text(item.activity)
+                    area_clean = item.area if item.area and item.area != "N/A" else "General"
+                    person_clean = item.responsible_person if item.responsible_person and item.responsible_person != "N/A" else "-"
+                    remarks_clean = item.remarks if item.remarks and item.remarks != "N/A" else "-"
 
-                # Trim only the rows left unused by this report.
+                    row.cells[0].text = str(idx + 1)
+                    row.cells[1].text = area_clean
+                    row.cells[2].text = activity_clean
+                    row.cells[3].text = f"{item.progress_percentage}%" if item.progress_percentage is not None else "-"
+                    row.cells[4].text = item.date if item.date != "N/A" else today.strftime("%Y-%m-%d")
+                    row.cells[5].text = person_clean
+                    row.cells[6].text = item.status
+                    row.cells[7].text = remarks_clean
+
+                # Trim unused rows
                 while len(t.rows) > len(tasks_source) + 1:
                     t._tbl.remove(t.rows[-1]._tr)
+
+                # Explicitly assign cell widths to maintain layout
+                for r in t.rows:
+                    for c_idx, width in enumerate(col_widths):
+                        if c_idx < len(r.cells):
+                            r.cells[c_idx].width = width
 
                 logger.info(f"Work Summary (Table 6) populated with {len(tasks_source)} row(s).")
             except Exception as e:
@@ -266,7 +303,7 @@ class DocxReportGenerator:
             t = tables[14]
             try:
                 pct = report_data.overall_progress_percentage
-                pct_str = f"{pct}%" if pct is not None else "N/A"
+                pct_str = f"{pct}%" if pct is not None else "-"
                 t.cell(1, 0).text = pct_str
 
                 status = report_data.overall_status
@@ -275,7 +312,7 @@ class DocxReportGenerator:
                 delayed_cb = "■ Delayed" if status == "Delayed" else "□ Delayed"
                 on_hold_cb = "■ On Hold" if status == "On Hold" else "□ On Hold"
 
-                t.cell(1, 1).text = f"{in_progress_cb}    {completed_cb}    {delayed_cb}    {on_hold_cb}"
+                t.cell(1, 1).text = f"{in_progress_cb}   {completed_cb}   {delayed_cb}   {on_hold_cb}"
                 logger.info("Overall Project Status (Table 14) populated.")
             except Exception as e:
                 logger.error(f"Error populating Overall Project Status: {e}")
@@ -298,26 +335,36 @@ class DocxReportGenerator:
         return str(output_path)
 
     def _populate_site_photographs(self, doc: Document, photo_paths: List[Path]) -> None:
-        """Populate the 'Site Photographs' section with photos or a placeholder message."""
+        """Populate the 'Attachments & Photographs' section with photos or a clean message."""
         body = doc.element.body
         tables = doc.tables
 
         site_photos_table_idx = None
         for i, t in enumerate(tables):
             cell_text = t.cell(0, 0).text.strip().upper()
-            if "SITE PHOTOGRAPHS" in cell_text:
+            if "SITE PHOTOGRAPHS" in cell_text or "ATTACHMENTS" in cell_text:
                 site_photos_table_idx = i
                 break
 
         if site_photos_table_idx is None:
-            logger.warning("'Site Photographs' section heading table not found. Skipping photo embedding.")
+            logger.warning("Photographs section heading table not found. Skipping photo embedding.")
             return
 
         site_photos_heading_element = tables[site_photos_table_idx]._tbl
 
-        # Clear only the placeholder paragraphs that belong to this section.
-        # Removing everything up to sectPr also destroyed sign-off blocks and any
-        # other content the template places after the photographs.
+        # Remove placeholder photo tables (containing '[ Insert Photograph Here ]')
+        tables_to_remove = []
+        for t in doc.tables:
+            if len(t.rows) > 0 and "[ Insert Photograph Here ]" in t.rows[0].cells[0].text:
+                tables_to_remove.append(t)
+
+        for t in tables_to_remove:
+            try:
+                t._element.getparent().remove(t._element)
+            except Exception as e:
+                logger.warning(f"Could not remove photo placeholder table: {e}")
+
+        # Clear placeholder paragraphs after heading
         elements_to_remove = []
         found_heading = False
         for child in list(body):
@@ -330,23 +377,12 @@ class DocxReportGenerator:
             if tag == 'sectPr':
                 break
             if tag == 'tbl':
-                # A following table starts the next section; stop here.
                 break
-            if tag == 'p' and not "".join(child.itertext()).strip():
-                elements_to_remove.append(child)
-                continue
             if tag == 'p':
-                # A non-empty paragraph here is the template's placeholder text.
                 elements_to_remove.append(child)
-                continue
-            break
 
         for elem in elements_to_remove:
             body.remove(elem)
-
-        logger.info(
-            f"Cleared {len(elements_to_remove)} placeholder paragraph(s) from the Site Photographs section."
-        )
 
         insert_after = site_photos_heading_element
 
@@ -358,7 +394,7 @@ class DocxReportGenerator:
 
                 try:
                     caption_para = doc.add_paragraph()
-                    caption_run = caption_para.add_run(f"▸  Photo {idx + 1}")
+                    caption_run = caption_para.add_run(f"▸ Photo {idx + 1}")
                     caption_run.bold = True
                     insert_after.addnext(caption_para._element)
                     insert_after = caption_para._element
@@ -378,6 +414,7 @@ class DocxReportGenerator:
                     logger.error(f"Failed to embed photo {idx + 1} ({photo_path}): {e}")
         else:
             no_photo_para = doc.add_paragraph()
-            no_photo_para.text = "No photographs provided."
+            no_photo_para.text = "No photographs attached for this daily report."
             insert_after.addnext(no_photo_para._element)
-            logger.info("No photographs provided — placeholder text inserted.")
+            logger.info("No photographs provided — clean notice inserted.")
+

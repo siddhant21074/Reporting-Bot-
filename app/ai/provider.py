@@ -648,7 +648,8 @@ class AIProvider:
                 [WorkSummaryItem(area="General", activity="Daily update recorded", status="Completed")],
             )
 
-        raw_text = text.strip()
+        raw_text = re.sub(r"^(?:Text Update|Voice Note|Transcript)\s*(?:#\d+)?\s*(?:Transcript)?:?\s*", "", text.strip(), flags=re.IGNORECASE)
+        raw_text = re.sub(r"^[\s\-\*•●▸]+", "", raw_text).strip()
         today = datetime.now().strftime("%Y-%m-%d")
 
         action_verbs = (
@@ -664,12 +665,13 @@ class AIProvider:
             "conducted", "inspected", "arranged", "installed",
         )
 
-        lines = [line.strip("-*•● ").strip() for line in raw_text.splitlines() if line.strip()]
+        lines = [re.sub(r"^(?:Text Update|Voice Note|Transcript)\s*(?:#\d+)?\s*(?:Transcript)?:?\s*", "", line.strip(), flags=re.IGNORECASE).strip("-*•●▸ ").strip() for line in raw_text.splitlines() if line.strip()]
         segments = lines if len(lines) > 1 else re.split(r"(?<=[.!?])\s+", raw_text)
 
         work_items: List[WorkSummaryItem] = []
         for segment in segments:
             activity = segment.strip(" ,.-").strip()
+            activity = re.sub(r"^[\s\-\*•●▸]+", "", activity).strip()
             if not activity or not re.search(action_verbs, activity, re.IGNORECASE):
                 continue
 
@@ -682,7 +684,8 @@ class AIProvider:
             work_items.append(WorkSummaryItem(activity=activity, date=today, status=status))
 
         if not work_items:
-            work_items = [WorkSummaryItem(activity=raw_text, date=today, status="In Progress")]
+            clean_activity = raw_text[0].upper() + raw_text[1:] if raw_text else "Daily update recorded."
+            work_items = [WorkSummaryItem(activity=clean_activity, date=today, status="In Progress")]
 
         descriptions = [item.activity.rstrip(".") for item in work_items]
         if len(descriptions) == 1:
