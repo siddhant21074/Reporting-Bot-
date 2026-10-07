@@ -21,14 +21,14 @@ jobs:
         run: |
           # 1. Set up Git identity for the commit
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           # 2. Clone your newly created destination repository
-          # Change 'your-username' and 'newly-created-repo-name' to match your Github details
-          git clone https://x-token-auth:${DEST_TOKEN}@://github.com dest_repo
+          # IMPORTANT: Replace siddhant21074 with your actual username. 
+          # The space in "Knowledge Base" is safely converted to "%20" for the URL.
+          git clone "https://x-token-auth:${DEST_TOKEN}@://github.com" dest_repo
           
           # 3. Copy context.md from your source into the cloned destination folder
-          # Change 'repo-1-context.md' if you want a different name so your 3 repos don't conflict
           cp context.md dest_repo/repo-1-context.md
           
           # 4. Navigate into the destination repository to commit and push
