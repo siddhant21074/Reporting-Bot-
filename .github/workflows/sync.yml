@@ -24,7 +24,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git clone "https://x-access-token:${DEST_TOKEN}@github.com/siddhant21074/Knowledge-Base.git" dest_repo
+          git clone "https://x-access-token:${DEST_TOKEN}@github.com/siddhant21074/Knowledge-Base-.git" dest_repo
 
           cp context.md dest_repo/context.md
 
