@@ -1,0 +1,36 @@
+name: Copy context.md to Destination
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'context.md'
+
+jobs:
+  copy-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repo
+        uses: actions/checkout@v4
+
+      - name: Clone Destination Repo & Copy File
+        env:
+          DEST_TOKEN: ${{ secrets.MY_DESTINATION_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          
+          git clone "https://x-token-auth:${DEST_TOKEN}@://github.com" dest_repo
+          
+          cp context.md dest_repo/repo-1-context.md
+          
+          cd dest_repo
+          git add repo-1-context.md
+          
+          if git diff --cached --quiet; then
+            echo "No changes detected in context.md. Skipping push."
+          else
+            git commit -m "Automated update of context.md from Source Repo"
+            git push origin main
+          fi
