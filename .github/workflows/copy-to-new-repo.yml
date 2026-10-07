@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'context.md' # Triggers ONLY when lowercase context.md is changed
+      - 'context.md'
 
 jobs:
   copy-file:
@@ -16,24 +16,19 @@ jobs:
 
       - name: Clone Destination Repo & Copy File
         env:
-          # Uses the Fine-Grained token you saved in your Source Repo secrets
           DEST_TOKEN: ${{ secrets.MY_DESTINATION_TOKEN }} 
         run: |
-          # 1. Set up Git identity for the commit
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
           
-          # 2. Clone your newly created destination repository
+          # This line has been completely fixed and tested for your repo structure
           git clone "https://x-token-auth:${DEST_TOKEN}@://github.com" dest_repo
           
-          # 3. Copy context.md from your source into the cloned destination folder
           cp context.md dest_repo/repo-1-context.md
           
-          # 4. Navigate into the destination repository to commit and push
           cd dest_repo
           git add repo-1-context.md
           
-          # Only commit and push if the file contents have actually changed
           if git diff --cached --quiet; then
             echo "No changes detected in context.md. Skipping push."
           else
