@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'context.md' # Triggers ONLY when context.md is changed
+      - 'context.md' # Triggers ONLY when lowercase context.md is changed
 
 jobs:
   copy-file:
@@ -21,11 +21,9 @@ jobs:
         run: |
           # 1. Set up Git identity for the commit
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]@://github.com"
           
           # 2. Clone your newly created destination repository
-          # IMPORTANT: Replace siddhant21074 with your actual username. 
-          # The space in "Knowledge Base" is safely converted to "%20" for the URL.
           git clone "https://x-token-auth:${DEST_TOKEN}@://github.com" dest_repo
           
           # 3. Copy context.md from your source into the cloned destination folder
