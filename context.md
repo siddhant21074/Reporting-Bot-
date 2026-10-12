@@ -1,11 +1,4 @@
 
-
-
-
-The Reporting WhatsApp Bot is an internal automation system that collects business reports through WhatsApp, processes the submitted information, and generates structured summaries for management.
-
-The primary goal is to make daily and weekly reporting faster, more consistent, and easier to monitor without requiring employees to manually prepare reports.
-
 ## Bot Name
 
 Reporting Bot
